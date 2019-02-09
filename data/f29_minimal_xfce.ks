@@ -89,3 +89,50 @@ pwpolicy root --minlen=6 --minquality=1 --notstrict --nochanges --notempty
 pwpolicy user --minlen=6 --minquality=1 --notstrict --nochanges --emptyok
 pwpolicy luks --minlen=6 --minquality=1 --notstrict --nochanges --notempty
 %end
+
+%post --interpreter /usr/bin/bash --log /root/post_install.log
+########## START OF INSTALLER STUB ##########
+
+#! /usr/bin/env bash
+
+sde_version=4.0.6
+
+panic()
+{
+	echo "ERROR: $@"
+	exit 1
+}
+
+test_mode=0
+while getopts n opt; do
+	case $opt in
+	n)
+		test_mode=1;;
+	esac
+done
+shift $((OPTIND - 1))
+
+tmp_dir="/tmp/installer_stub"
+sde_install_dir="/opt/sde-$sde_version"
+if [ "$test_mode" -ne 0 ]; then
+	tmp_dir="/tmp/installer_stub"
+	sde_install_dir="/tmp/sde-$sde_version"
+fi
+
+git_dir="$tmp_dir/cppvm"
+
+mkdir -p "$tmp_dir" || \
+  panic "cannot make directory $tmp_dir"
+git -C "$tmp_dir" clone https://github.com/mdadams/cppvm.git "$git_dir" || \
+  panic "cannot clone repository"
+
+options=()
+if [ "$test_mode" -ne 0 ]; then
+	options+=(-n)
+fi
+"$git_dir/bin/installer" -d "$sde_install_dir" -v "$sde_version" \
+  -t "$tmp_dir/sde" "${options[@]}" || \
+  panic "installer failed"
+
+########## END OF INSTALLER STUB ##########
+%end

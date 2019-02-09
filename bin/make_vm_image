@@ -17,19 +17,21 @@ if [ ! -f "$ks_file" ]; then
 	panic "kickstart file is missing"
 fi
 
-if [ "$# -ne 1 ]; then
+if [ $# -ne 1 ]; then
 	panic "bad usage"
 fi
 work_dir="$1"
 
+name="fedora29_cpp"
 download_dir="$work_dir/downloads"
 netinst_base=$(basename "$netinst_url") || panic "cannot get base name"
 netinst_file="$download_dir/$netinst_base"
 disk_file="$work_dir/image.qcow2"
 
-for dir in "$download_dir"; do
+for dir in "$work_dir" "$download_dir"; do
 	if [ ! -d "$dir" ]; then
-		mkdir -p "$dir" || panic "cannot make directory $dir"
+		mkdir "$dir" || panic "cannot make directory $dir"
+		chmod a+rx "$dir"
 	fi
 done
 
@@ -42,7 +44,7 @@ ks_base=$(basename "$ks_file") || \
   panic "cannot get base name"
 
 virt-install \
-  --name cpp \
+  --name "$name" \
   --memory 16384 \
   --vcpus 4 \
   --disk path=$disk_file,format=qcow2,size=16 \
@@ -53,4 +55,9 @@ virt-install \
   --initrd-inject "$ks_file" \
   --extra-args "ks=file:/$ks_base" \
   || panic "virt-install failed"
+
+exit
+
+##########
+  --cdrom "$netinst_file" \
 
