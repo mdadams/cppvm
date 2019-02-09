@@ -1,0 +1,56 @@
+#! /usr/bin/env bash
+
+panic()
+{
+	echo "error: $@"
+	exit 1
+}
+
+netinst_url="https://download.fedoraproject.org/pub/fedora/linux/releases/29/Everything/x86_64/iso/Fedora-Everything-netinst-x86_64-29-1.2.iso"
+
+cmd_dir=$(dirname "$0") || panic "cannot get program directory"
+root_dir="$cmd_dir/.."
+data_dir="$root_dir/data"
+ks_file="$data_dir/f29_minimal_xfce.ks"
+
+if [ ! -f "$ks_file" ]; then
+	panic "kickstart file is missing"
+fi
+
+if [ "$# -ne 1 ]; then
+	panic "bad usage"
+fi
+work_dir="$1"
+
+download_dir="$work_dir/downloads"
+netinst_base=$(basename "$netinst_url") || panic "cannot get base name"
+netinst_file="$download_dir/$netinst_base"
+disk_file="$work_dir/image.qcow2"
+
+for dir in "$download_dir"; do
+	if [ ! -d "$dir" ]; then
+		mkdir -p "$dir" || panic "cannot make directory $dir"
+	fi
+done
+
+if [ ! -f "$netinst_file" ]; then
+	wget -O "$netinst_file" "$netinst_url" || \
+	  panic "cannot download netinst"
+fi
+
+ks_base=$(basename "$ks_file") || \
+  panic "cannot get base name"
+
+virt-install \
+  --name cpp \
+  --memory 16384 \
+  --vcpus 4 \
+  --disk path=$disk_file,format=qcow2,size=16 \
+  --os-type linux \
+  --network bridge=virbr0 \
+  --graphics spice \
+  --location "$netinst_file" \
+  --initrd-inject "$ks_file" \
+  --extra-args "ks=file:/$ks_base" \
+  || panic "virt-install failed"
+
