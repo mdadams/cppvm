@@ -27,8 +27,6 @@ shift $((OPTIND - 1))
 
 if [ "$test_mode" -ne 0 ]; then
 	echo "TEST MODE"
-	echo "$0 $@"
-	exit 0
 fi
 
 if [ -z "$sde_install_dir" ]; then
