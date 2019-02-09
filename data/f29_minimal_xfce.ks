@@ -11,6 +11,8 @@ url --url="https://sjc.edge.kernel.org/fedora-buffet/fedora/linux/releases/29/Ev
 keyboard --vckeymap=us --xlayouts='us'
 # System language
 lang en_US.UTF-8
+# Reboot
+reboot
 
 # Network information
 network  --bootproto=dhcp --device=ens3 --ipv6=auto --activate
