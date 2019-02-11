@@ -95,12 +95,16 @@ pwpolicy user --minlen=6 --minquality=1 --notstrict --nochanges --emptyok
 pwpolicy luks --minlen=6 --minquality=1 --notstrict --nochanges --notempty
 %end
 
-%post --interpreter /usr/bin/bash --log /root/post_install.log
+%post --interpreter /usr/bin/bash --log /root/install_sde_stub.log
 ########## START OF INSTALLER STUB ##########
 
 #! /usr/bin/env bash
 
 sde_version=4.0.7
+tmp_dir="/tmp/install_sde-$$"
+sde_install_dir="/opt/sde-$sde_version"
+log_file="/root/install_sde.log"
+tty_dev="/dev/tty10"
 
 panic()
 {
@@ -117,27 +121,33 @@ while getopts n opt; do
 done
 shift $((OPTIND - 1))
 
-tmp_dir="/tmp/installer_stub"
-sde_install_dir="/opt/sde-$sde_version"
 if [ "$test_mode" -ne 0 ]; then
-	tmp_dir="/tmp/installer_stub"
+	tmp_dir="/tmp/install_sde"
 	sde_install_dir="/tmp/sde-$sde_version"
+	log_file="/tmp/install_sde.log"
+	tty_dev=$(tty) || panic "cannot get terminal"
 fi
 
 git_dir="$tmp_dir/cppvm"
 
-mkdir -p "$tmp_dir" || \
-  panic "cannot make directory $tmp_dir"
-git -C "$tmp_dir" clone https://github.com/mdadams/cppvm.git "$git_dir" || \
-  panic "cannot clone repository"
+rm -f "$log_file"
 
-options=()
-if [ "$test_mode" -ne 0 ]; then
-	options+=(-n)
-fi
-"$git_dir/bin/installer" -d "$sde_install_dir" -v "$sde_version" \
-  -t "$tmp_dir/sde" "${options[@]}" || \
-  panic "installer failed"
+{
+
+	mkdir -p "$tmp_dir" || \
+	  panic "cannot make directory $tmp_dir"
+	git -C "$tmp_dir" clone https://github.com/mdadams/cppvm.git "$git_dir" || \
+	  panic "cannot clone repository"
+
+	options=()
+	if [ "$test_mode" -ne 0 ]; then
+		options+=(-n)
+	fi
+	"$git_dir/bin/installer" -d "$sde_install_dir" -v "$sde_version" \
+	  -t "$tmp_dir/sde" "${options[@]}" || \
+	  panic "installer failed"
+
+} 2>&1 | tee -a "$log_file" > "$tty_dev"
 
 ########## END OF INSTALLER STUB ##########
 %end

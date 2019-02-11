@@ -6,6 +6,12 @@ panic()
 	exit 1
 }
 
+usage()
+{
+	echo "usage: $0 work_dir vm_name"
+	exit 2
+}
+
 netinst_url="https://download.fedoraproject.org/pub/fedora/linux/releases/29/Everything/x86_64/iso/Fedora-Everything-netinst-x86_64-29-1.2.iso"
 
 cmd_dir=$(dirname "$0") || panic "cannot get program directory"
@@ -17,18 +23,19 @@ if [ ! -f "$ks_file" ]; then
 	panic "kickstart file is missing"
 fi
 
-if [ $# -ne 1 ]; then
-	panic "bad usage"
+if [ $# -ne 2 ]; then
+	usage "bad usage"
 fi
 work_dir="$1"
+name="$2"
 
-name="fedora29_cpp"
+#name="fedora29_cpp"
 download_dir="$work_dir/downloads"
 netinst_base=$(basename "$netinst_url") || panic "cannot get base name"
 netinst_file="$download_dir/$netinst_base"
-disk_file="$work_dir/image.qcow2"
-vmdk_file="$work_dir/image.vmdk"
-vdi_file="$work_dir/image.vdi"
+disk_file="$work_dir/$name.qcow2"
+vmdk_file="$work_dir/$name.vmdk"
+vdi_file="$work_dir/$name.vdi"
 
 ks_base=$(basename "$ks_file") || \
   panic "cannot get base name"
