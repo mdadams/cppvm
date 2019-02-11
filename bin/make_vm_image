@@ -27,6 +27,11 @@ download_dir="$work_dir/downloads"
 netinst_base=$(basename "$netinst_url") || panic "cannot get base name"
 netinst_file="$download_dir/$netinst_base"
 disk_file="$work_dir/image.qcow2"
+vmdk_file="$work_dir/image.vmdk"
+vdi_file="$work_dir/image.vdi"
+
+ks_base=$(basename "$ks_file") || \
+  panic "cannot get base name"
 
 for dir in "$work_dir" "$download_dir"; do
 	if [ ! -d "$dir" ]; then
@@ -40,21 +45,44 @@ if [ ! -f "$netinst_file" ]; then
 	  panic "cannot download netinst"
 fi
 
-ks_base=$(basename "$ks_file") || \
-  panic "cannot get base name"
+if [ ! -f "$disk_file" ]; then
+	virt-install \
+	  --name "$name" \
+	  --memory 16384 \
+	  --vcpus 4 \
+	  --disk path=$disk_file,format=qcow2,size=16 \
+	  --os-type linux \
+	  --network bridge=virbr0 \
+	  --graphics spice \
+	  --location "$netinst_file" \
+	  --initrd-inject "$ks_file" \
+	  --extra-args "ks=file:/$ks_base" \
+	  || panic "virt-install failed"
+fi
 
-virt-install \
-  --name "$name" \
-  --memory 16384 \
-  --vcpus 4 \
-  --disk path=$disk_file,format=qcow2,size=16 \
-  --os-type linux \
-  --network bridge=virbr0 \
-  --graphics spice \
-  --location "$netinst_file" \
-  --initrd-inject "$ks_file" \
-  --extra-args "ks=file:/$ks_base" \
-  || panic "virt-install failed"
+ls -l "$disk_file"
+
+echo "Converting from QCOW2 to VDI"
+if [ ! -f "$vdi_file" ]; then
+	qemu-img convert -f qcow2 -O vdi \
+	  "$disk_file" "$vdi_file" || \
+	  panic "cannot convert image"
+	ls -l "$vdi_file"
+fi
+
+echo "Converting from QCOW2 to VMDK"
+ls -l "$disk_file"
+if [ ! -f "$vmdk_file" ]; then
+	qemu-img convert -f qcow2 -O vmdk \
+	  -o adapter_type=lsilogic,subformat=streamOptimized,compat6 \
+	  "$disk_file" "$vmdk_file" || \
+	  panic "cannot convert image"
+	ls -l "$vmdk_file"
+fi
+
+#echo "Compressing VMDK image"
+#gzip "$vmdk_file" || panic "cannot compress image"
+#ls -l "$vmdk_file.gz"
 
 exit
 

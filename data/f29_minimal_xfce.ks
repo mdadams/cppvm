@@ -79,6 +79,9 @@ qt5-devel
 bzip2
 xz
 evince
+a2ps
+texlive-pdfjam
+zerofree
 
 %end
 
@@ -97,7 +100,7 @@ pwpolicy luks --minlen=6 --minquality=1 --notstrict --nochanges --notempty
 
 #! /usr/bin/env bash
 
-sde_version=4.0.6
+sde_version=4.0.7
 
 panic()
 {
