@@ -82,6 +82,7 @@ evince
 a2ps
 texlive-pdfjam
 zerofree
+lsof
 
 %end
 
@@ -100,7 +101,7 @@ pwpolicy luks --minlen=6 --minquality=1 --notstrict --nochanges --notempty
 
 #! /usr/bin/env bash
 
-sde_version=4.0.7
+sde_version=4.0.10
 tmp_dir="/tmp/install_sde-$$"
 sde_install_dir="/opt/sde-$sde_version"
 log_file="/root/install_sde.log"
