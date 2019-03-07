@@ -97,11 +97,11 @@ pwpolicy luks --minlen=6 --minquality=1 --notstrict --nochanges --notempty
 %end
 
 %post --interpreter /usr/bin/bash --log /root/install_sde_stub.log
-########## START OF INSTALLER STUB ##########
+########## START OF installer_stub ##########
 
 #! /usr/bin/env bash
 
-sde_version=4.0.15
+sde_version=4.0.17
 tmp_dir="/tmp/install_sde-$$"
 sde_install_dir="/opt/sde-$sde_version"
 log_file="/root/install_sde.log"
@@ -150,5 +150,5 @@ rm -f "$log_file"
 
 } 2>&1 | tee -a "$log_file" > "$tty_dev"
 
-########## END OF INSTALLER STUB ##########
+########## END OF installer_stub ##########
 %end
