@@ -12,7 +12,6 @@ usage()
 	exit 2
 }
 
-netinst_url="https://download.fedoraproject.org/pub/fedora/linux/releases/29/Everything/x86_64/iso/Fedora-Everything-netinst-x86_64-29-1.2.iso"
 
 cmd_dir=$(dirname "$0") || panic "cannot get program directory"
 root_dir="$cmd_dir/.."
@@ -24,7 +23,9 @@ sparsify=1
 ks_file="$data_dir/f29_minimal_xfce.ks"
 work_dir=
 name=
-while getopts D:d:n:k:t:x opt; do
+mirror=muug
+
+while getopts D:d:n:k:t:m:x opt; do
 	case "$opt" in
 	d)
 		work_dir="$OPTARG";;
@@ -36,6 +37,8 @@ while getopts D:d:n:k:t:x opt; do
 		debug_level="$OPTARG";;
 	t)
 		tmp_dir="$OPTARG";;
+	m)
+		mirror="$OPTARG";;
 	x)
 		sparsify=0;;
 	\?)
@@ -69,12 +72,23 @@ if [ -z "$tmp_dir" ]; then
 	tmp_dir="${TMPDIR:-/tmp}"
 fi
 
+case "$mirror" in
+muug)
+	netinst_url="https://muug.ca/mirror/fedora/linux/releases/29/Everything/x86_64/iso/Fedora-Everything-netinst-x86_64-29-1.2.iso"
+	;;
+*)
+	netinst_url="https://download.fedoraproject.org/pub/fedora/linux/releases/29/Everything/x86_64/iso/Fedora-Everything-netinst-x86_64-29-1.2.iso"
+	;;
+esac
+
 cat <<- EOF
 work directory: $work_dir
 kickstart file: $ks_file
 VM name: $name
 temporary directory: $tmp_dir
 sparsify: $sparsify
+mirror: $mirror
+netinst URL: $netinst_url
 EOF
 
 #exit
