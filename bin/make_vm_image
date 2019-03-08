@@ -29,13 +29,14 @@ fi
 work_dir="$1"
 name="$2"
 
-#name="fedora29_cpp"
 download_dir="$work_dir/downloads"
 netinst_base=$(basename "$netinst_url") || panic "cannot get base name"
 netinst_file="$download_dir/$netinst_base"
 disk_file="$work_dir/$name.qcow2"
 vmdk_file="$work_dir/$name.vmdk"
+gzvmdk_file="$work_dir/$name.vmdk.gz"
 vdi_file="$work_dir/$name.vdi"
+gzvdi_file="$work_dir/$name.vdi.gz"
 
 ks_base=$(basename "$ks_file") || \
   panic "cannot get base name"
@@ -76,6 +77,11 @@ if [ ! -f "$vdi_file" ]; then
 	  panic "cannot convert image"
 	ls -l "$vdi_file"
 fi
+echo "Compressing VDI image"
+if [ ! -f "$gzvdi_file" ]; then
+	gzip -c "$vdi_file" > "$gzvdi_file" || panic "cannot compress image"
+	ls -l "$gzvdi_file"
+fi
 
 echo "Converting from QCOW2 to VMDK"
 ls -l "$disk_file"
@@ -86,10 +92,11 @@ if [ ! -f "$vmdk_file" ]; then
 	  panic "cannot convert image"
 	ls -l "$vmdk_file"
 fi
-
-#echo "Compressing VMDK image"
-#gzip "$vmdk_file" || panic "cannot compress image"
-#ls -l "$vmdk_file.gz"
+echo "Compressing VMDK image"
+if [ ! -f "$gzvmdk_file" ]; then
+	gzip -c "$vmdk_file" > "$gzvmdk_file" || panic "cannot compress image"
+	ls -l "$gzvmdk_file"
+fi
 
 exit
 
