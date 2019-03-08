@@ -18,12 +18,13 @@ cmd_dir=$(dirname "$0") || panic "cannot get program directory"
 root_dir="$cmd_dir/.."
 data_dir="$root_dir/data"
 
+tmp_dir=/var/tmp
 debug_level=0
-sparsify=0
+sparsify=1
 ks_file="$data_dir/f29_minimal_xfce.ks"
 work_dir=
 name=
-while getopts D:d:n:k:s opt; do
+while getopts D:d:n:k:st: opt; do
 	case "$opt" in
 	d)
 		work_dir="$OPTARG";;
@@ -33,8 +34,10 @@ while getopts D:d:n:k:s opt; do
 		ks_file="$OPTARG";;
 	D)
 		debug_level="$OPTARG";;
-	s)
-		sparsify=1;;
+	t)
+		tmp_dir="$OPTARG";;
+	x)
+		sparsify=0;;
 	\?)
 		usage
 		break;;
@@ -62,10 +65,15 @@ if [ ! -f "$ks_file" ]; then
 	panic "kickstart file is missing"
 fi
 
+if [ -z "$tmp_dir" ]; then
+	tmp_dir="${TMPDIR:-/tmp}"
+fi
+
 cat <<- EOF
 work directory: $work_dir
 kickstart file: $ks_file
 VM nane: $name
+temporary directory: $tmp_dir
 EOF
 
 #exit
@@ -74,7 +82,8 @@ download_dir="$work_dir/downloads"
 netinst_base=$(basename "$netinst_url") || panic "cannot get base name"
 netinst_file="$download_dir/$netinst_base"
 disk_file="$work_dir/$name.qcow2"
-sparse_file="$work_dir/${name}_sparse.qcow2"
+orig_file="$work_dir/${name}-original.qcow2"
+sparse_file="$work_dir/${name}-sparsified.qcow2"
 vmdk_file="$work_dir/$name.vmdk"
 gzvmdk_file="$work_dir/$name.vmdk.gz"
 vdi_file="$work_dir/$name.vdi"
@@ -108,19 +117,29 @@ if [ ! -f "$disk_file" ]; then
 	  --initrd-inject "$ks_file" \
 	  --extra-args "ks=file:/$ks_base" \
 	  || panic "virt-install failed"
+	cp "$disk_file" "$orig_file" || panic "cannot copy file"
+	chmod a-w "$orig_file" || panic "cannot change file permissions"
 fi
 
-ls -l "$disk_file"
+if [ ! -f "$orig_file" ]; then
+	panic "missing file $orig_file"
+fi
+
+ls -l "$orig_file"
 
 if [ "$sparsify" -ne 0 ]; then
-	virt-sparsify "$disk_file" "$sparse_file" || panic "cannot sparsify"
-	mv "$sparse_file" "$disk_file" || panic "cannot move file"
+	TMPDIR="$tmp_dir" \
+	  virt-sparsify "$orig_file" "$sparse_file" || panic "cannot sparsify"
+else
+	cp "$orig_file" "$sparse_file" || panic "cannot copy"
 fi
+
+ls -l "$sparse_file"
 
 echo "Converting from QCOW2 to VDI"
 if [ ! -f "$vdi_file" ]; then
 	qemu-img convert -f qcow2 -O vdi \
-	  "$disk_file" "$vdi_file" || \
+	  "$sparse_file" "$vdi_file" || \
 	  panic "cannot convert image"
 	ls -l "$vdi_file"
 fi
@@ -131,11 +150,10 @@ if [ ! -f "$gzvdi_file" ]; then
 fi
 
 echo "Converting from QCOW2 to VMDK"
-ls -l "$disk_file"
 if [ ! -f "$vmdk_file" ]; then
 	qemu-img convert -f qcow2 -O vmdk \
 	  -o adapter_type=lsilogic,subformat=streamOptimized,compat6 \
-	  "$disk_file" "$vmdk_file" || \
+	  "$sparse_file" "$vmdk_file" || \
 	  panic "cannot convert image"
 	ls -l "$vmdk_file"
 fi
