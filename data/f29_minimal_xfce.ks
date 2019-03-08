@@ -12,7 +12,8 @@ keyboard --vckeymap=us --xlayouts='us'
 # System language
 lang en_US.UTF-8
 # Reboot
-reboot
+#reboot
+shutdown
 
 # Network information
 network  --bootproto=dhcp --device=ens3 --ipv6=auto --activate

@@ -8,7 +8,7 @@ panic()
 
 usage()
 {
-	echo "usage: $0 work_dir vm_name"
+	echo "usage: $0 -d work_dir -n vm_name -k ks_file"
 	exit 2
 }
 
@@ -17,22 +17,47 @@ netinst_url="https://download.fedoraproject.org/pub/fedora/linux/releases/29/Eve
 cmd_dir=$(dirname "$0") || panic "cannot get program directory"
 root_dir="$cmd_dir/.."
 data_dir="$root_dir/data"
+
+sparsify=0
 ks_file="$data_dir/f29_minimal_xfce.ks"
+work_dir=
+name=
+while getopts d:n:k:s opt; do
+	case "$opt" in
+	d)
+		work_dir="$OPTARG";;
+	n)
+		name="$OPTARG";;
+	k)
+		ks_file="$OPTARG";;
+	s)
+		sparsify=1;;
+	\?)
+		usage
+		break;;
+	esac
+done
+shift $((OPTIND - 1))
+
+if [ -z "$work_dir" ]; then
+	usage "no work directory specified"
+fi
+if [ -z "$name" ]; then
+	usage "no VM name specified"
+fi
+if [ -z "$ks_file" ]; then
+	usage "no kickstart file specified"
+fi
 
 if [ ! -f "$ks_file" ]; then
 	panic "kickstart file is missing"
 fi
 
-if [ $# -ne 2 ]; then
-	usage "bad usage"
-fi
-work_dir="$1"
-name="$2"
-
 download_dir="$work_dir/downloads"
 netinst_base=$(basename "$netinst_url") || panic "cannot get base name"
 netinst_file="$download_dir/$netinst_base"
 disk_file="$work_dir/$name.qcow2"
+sparse_file="$work_dir/${name}_sparse.qcow2"
 vmdk_file="$work_dir/$name.vmdk"
 gzvmdk_file="$work_dir/$name.vmdk.gz"
 vdi_file="$work_dir/$name.vdi"
@@ -69,6 +94,11 @@ if [ ! -f "$disk_file" ]; then
 fi
 
 ls -l "$disk_file"
+
+if [ "$sparsify" -ne 0 ]; then
+	virt-sparsify "$disk_file" "$sparse_file" || panic "cannot sparsify"
+	mv "$sparse_file" "$disk_file" || panic "cannot move file"
+fi
 
 echo "Converting from QCOW2 to VDI"
 if [ ! -f "$vdi_file" ]; then
