@@ -24,7 +24,7 @@ sparsify=1
 ks_file="$data_dir/f29_minimal_xfce.ks"
 work_dir=
 name=
-while getopts D:d:n:k:st: opt; do
+while getopts D:d:n:k:t:x opt; do
 	case "$opt" in
 	d)
 		work_dir="$OPTARG";;
@@ -72,8 +72,9 @@ fi
 cat <<- EOF
 work directory: $work_dir
 kickstart file: $ks_file
-VM nane: $name
+VM name: $name
 temporary directory: $tmp_dir
+sparsify: $sparsify
 EOF
 
 #exit
