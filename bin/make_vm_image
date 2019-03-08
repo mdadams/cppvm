@@ -18,11 +18,12 @@ cmd_dir=$(dirname "$0") || panic "cannot get program directory"
 root_dir="$cmd_dir/.."
 data_dir="$root_dir/data"
 
+debug_level=0
 sparsify=0
 ks_file="$data_dir/f29_minimal_xfce.ks"
 work_dir=
 name=
-while getopts d:n:k:s opt; do
+while getopts D:d:n:k:s opt; do
 	case "$opt" in
 	d)
 		work_dir="$OPTARG";;
@@ -30,6 +31,8 @@ while getopts d:n:k:s opt; do
 		name="$OPTARG";;
 	k)
 		ks_file="$OPTARG";;
+	D)
+		debug_level="$OPTARG";;
 	s)
 		sparsify=1;;
 	\?)
@@ -39,19 +42,33 @@ while getopts d:n:k:s opt; do
 done
 shift $((OPTIND - 1))
 
+if [ "$debug_level" -ge 1 ]; then
+	set -xv
+fi
+
 if [ -z "$work_dir" ]; then
 	usage "no work directory specified"
 fi
+work_dir=$(realpath "$work_dir") || panic
 if [ -z "$name" ]; then
 	usage "no VM name specified"
 fi
 if [ -z "$ks_file" ]; then
 	usage "no kickstart file specified"
 fi
+ks_file=$(realpath "$ks_file") || panic
 
 if [ ! -f "$ks_file" ]; then
 	panic "kickstart file is missing"
 fi
+
+cat <<- EOF
+work directory: $work_dir
+kickstart file: $ks_file
+VM nane: $name
+EOF
+
+#exit
 
 download_dir="$work_dir/downloads"
 netinst_base=$(basename "$netinst_url") || panic "cannot get base name"
