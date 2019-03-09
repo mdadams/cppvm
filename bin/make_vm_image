@@ -131,6 +131,7 @@ if [ ! -f "$disk_file" ]; then
 	  --location "$netinst_file" \
 	  --initrd-inject "$ks_file" \
 	  --extra-args "ks=file:/$ks_base" \
+	  --events on_poweroff=preserve \
 	  || panic "virt-install failed"
 	cp "$disk_file" "$orig_file" || panic "cannot copy file"
 	chmod a-w "$orig_file" || panic "cannot change file permissions"
