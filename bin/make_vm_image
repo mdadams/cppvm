@@ -48,6 +48,12 @@ vm_wait_for_shutoff()
 	return 0
 }
 
+get_checksum()
+{
+	local file="$1"
+	sha512sum - < "$file" | awk '{print $1;}' -
+}
+
 usage()
 {
 	echo "usage: $0 -d work_dir -n vm_name -k ks_file"
@@ -97,14 +103,14 @@ fi
 if [ -z "$work_dir" ]; then
 	usage "no work directory specified"
 fi
-work_dir=$(realpath "$work_dir") || panic
+work_dir=$(realpath "$work_dir") || panic "cannot get realpath"
 if [ -z "$name" ]; then
 	usage "no VM name specified"
 fi
 if [ -z "$ks_file" ]; then
 	usage "no kickstart file specified"
 fi
-ks_file=$(realpath "$ks_file") || panic
+ks_file=$(realpath "$ks_file") || panic "cannot get realpath"
 
 if [ ! -f "$ks_file" ]; then
 	panic "kickstart file is missing"
@@ -136,20 +142,25 @@ EOF
 #exit
 
 download_dir="$work_dir/downloads"
+image_dir="$work_dir/images"
+
 netinst_base=$(basename "$netinst_url") || panic "cannot get base name"
 netinst_file="$download_dir/$netinst_base"
-disk_file="$work_dir/$name.qcow2"
-orig_file="$work_dir/${name}-original.qcow2"
-sparse_file="$work_dir/${name}-sparsified.qcow2"
-vmdk_file="$work_dir/$name.vmdk"
-gzvmdk_file="$work_dir/$name.vmdk.gz"
-vdi_file="$work_dir/$name.vdi"
-gzvdi_file="$work_dir/$name.vdi.gz"
+
+disk_file="$image_dir/$name.qcow2"
+orig_file="$image_dir/${name}-original.qcow2"
+orig_csum_file="$image_dir/${name}-original.qcow2-SHA512SUM"
+sparse_file="$image_dir/${name}-sparsified.qcow2"
+vmdk_file="$image_dir/$name.vmdk"
+gzvmdk_file="$image_dir/$name.vmdk.gz"
+vdi_file="$image_dir/$name.vdi"
+gzvdi_file="$image_dir/$name.vdi.gz"
+csum_file="$image_dir/SHA512SUM"
 
 ks_base=$(basename "$ks_file") || \
   panic "cannot get base name"
 
-for dir in "$work_dir" "$download_dir"; do
+for dir in "$work_dir" "$download_dir" "$image_dir"; do
 	if [ ! -d "$dir" ]; then
 		mkdir "$dir" || panic "cannot make directory $dir"
 		chmod a+rx "$dir"
@@ -158,12 +169,20 @@ done
 
 echo "START TIME: $(get_time)"
 
+ls -l "$download_dir"
+ls -l "$image_dir"
+
 if [ ! -f "$netinst_file" ]; then
 	wget -O "$netinst_file" "$netinst_url" || \
 	  panic "cannot download netinst"
 fi
 
 if [ ! -f "$disk_file" ]; then
+	for file in "$orig_file" "$orig_csum_file"; do
+		if [ -f "$file" ]; then
+			rm -f "$file" || panic "cannot remove file $file"
+		fi
+	done
 	virt-install \
 	  --name "$name" \
 	  --memory 16384 \
@@ -185,6 +204,8 @@ if [ ! -f "$disk_file" ]; then
 	cp "$disk_file" "$orig_file" || panic "cannot copy file"
 	chmod a-w "$orig_file" || panic "cannot change file permissions"
 	echo "COPY FINISHED: $(get_time)"
+	get_checksum "$orig_file" > "$orig_csum_file" || \
+	  panic "cannot make checksum file"
 fi
 
 vm_wait_for_shutoff "$name" || panic "wait for VM shut off failed"
@@ -194,43 +215,60 @@ if [ ! -f "$orig_file" ]; then
 	panic "missing file $orig_file"
 fi
 
-ls -l "$orig_file"
+ls -l "$image_dir"
+#ls -l "$orig_file"
+
+for file in "$sparse_file" "$vdi_file" "$gzvdi_file" "$vmdk_file" \
+  "$csum_file"; do
+	if [ -f "$file" ]; then
+		rm -f "$file" || panic "cannot remove file $file"
+	fi
+done
 
 if [ "$sparsify" -ne 0 ]; then
 	TMPDIR="$tmp_dir" \
-	  virt-sparsify "$orig_file" "$sparse_file" || panic "cannot sparsify"
+	  virt-sparsify "$orig_file" "$sparse_file" || \
+	  panic "cannot sparsify VM image"
 else
-	cp "$orig_file" "$sparse_file" || panic "cannot copy"
+	cp "$orig_file" "$sparse_file" || \
+	  panic "cannot copy file"
 fi
 
-ls -l "$sparse_file"
+#ls -l "$sparse_file"
+ls -l "$image_dir"
 
 echo "Converting from QCOW2 to VDI"
-if [ ! -f "$vdi_file" ]; then
-	qemu-img convert -f qcow2 -O vdi \
-	  "$sparse_file" "$vdi_file" || \
-	  panic "cannot convert image"
-	ls -l "$vdi_file"
-fi
+qemu-img convert -f qcow2 -O vdi \
+  "$sparse_file" "$vdi_file" || \
+  panic "cannot convert image"
+
+#ls -l "$vdi_file"
+ls -l "$image_dir"
+
 echo "Compressing VDI image"
-if [ ! -f "$gzvdi_file" ]; then
-	gzip -c "$vdi_file" > "$gzvdi_file" || panic "cannot compress image"
-	ls -l "$gzvdi_file"
-fi
+gzip -c "$vdi_file" > "$gzvdi_file" || \
+  panic "cannot compress image"
+ls -l "$gzvdi_file"
+rm -f "$vdi_file" || \
+  panic "cannot remove file $vdi_file"
 
 echo "Converting from QCOW2 to VMDK"
-if [ ! -f "$vmdk_file" ]; then
-	qemu-img convert -f qcow2 -O vmdk \
-	  -o adapter_type=lsilogic,subformat=streamOptimized,compat6 \
-	  "$sparse_file" "$vmdk_file" || \
-	  panic "cannot convert image"
-	ls -l "$vmdk_file"
-fi
-echo "Compressing VMDK image"
-if [ ! -f "$gzvmdk_file" ]; then
-	gzip -c "$vmdk_file" > "$gzvmdk_file" || panic "cannot compress image"
-	ls -l "$gzvmdk_file"
-fi
+qemu-img convert -f qcow2 -O vmdk \
+  -o adapter_type=lsilogic,subformat=streamOptimized,compat6 \
+  "$sparse_file" "$vmdk_file" || \
+  panic "cannot convert image"
+
+#ls -l "$vmdk_file"
+ls -l "$image_dir"
+
+#echo "Compressing VMDK image"
+#gzip -c "$vmdk_file" > "$gzvmdk_file" || panic "cannot compress image"
+#ls -l "$gzvmdk_file"
+
+(cd "$image_dir" && \
+  sha512sum "$orig_file" "$sparse_file" "$gzvdi_file" "$vmdk_file") \
+  > "$csum_file" || \
+  panic "cannot generate checksum file"
 
 echo "FINISHED: $(get_time)"
 
