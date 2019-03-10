@@ -6,6 +6,48 @@ panic()
 	exit 1
 }
 
+get_time()
+{
+	date +"%Y-%m-%d %H:%M:%S"
+}
+
+vm_get_state()
+{
+
+	local name="$1"
+	local buffer
+	# Note: Do not put local on the next line as this changes the exit status.
+	buffer=$(virsh dominfo "$name" 2> /dev/null) || return 1
+	local state=$(sed -n -e 's/^State:[ ]*\(.*\)$/\1/p' <<< "$buffer")
+	case "$state" in
+	"shut off")
+		echo "shut_off";;
+	running)
+		echo "running";;
+	"in shutdown")
+		echo "in_shutdown";;
+	paused)
+		echo "paused";;
+	*)
+		echo "unknown ($state)";;
+	esac
+}
+
+vm_wait_for_shutoff()
+{
+	local name="$1"
+	echo "waiting for shutoff"
+	while true; do
+		state=$(vm_get_state "$name") || return 1
+		if [ "$state" = shut_off ]; then
+			break
+		fi
+		sleep 30
+	done
+	echo "finished wait for shutoff"
+	return 0
+}
+
 usage()
 {
 	echo "usage: $0 -d work_dir -n vm_name -k ks_file"
@@ -20,7 +62,7 @@ data_dir="$root_dir/data"
 tmp_dir=/var/tmp
 debug_level=0
 sparsify=1
-ks_file="$data_dir/f29_minimal_xfce.ks"
+ks_file=
 work_dir=
 name=
 mirror=muug
@@ -114,6 +156,8 @@ for dir in "$work_dir" "$download_dir"; do
 	fi
 done
 
+echo "START TIME: $(get_time)"
+
 if [ ! -f "$netinst_file" ]; then
 	wget -O "$netinst_file" "$netinst_url" || \
 	  panic "cannot download netinst"
@@ -133,9 +177,18 @@ if [ ! -f "$disk_file" ]; then
 	  --extra-args "ks=file:/$ks_base" \
 	  --events on_poweroff=preserve \
 	  || panic "virt-install failed"
+	vm_wait_for_shutoff "$name" || panic "wait for VM shut off failed"
+	echo "INSTALL FINISHED: $(get_time)"
+	if [ ! -f "$disk_file" ]; then
+		panic "disk image missing"
+	fi
 	cp "$disk_file" "$orig_file" || panic "cannot copy file"
 	chmod a-w "$orig_file" || panic "cannot change file permissions"
+	echo "COPY FINISHED: $(get_time)"
 fi
+
+vm_wait_for_shutoff "$name" || panic "wait for VM shut off failed"
+echo "WAIT FINISHED: $(get_time)"
 
 if [ ! -f "$orig_file" ]; then
 	panic "missing file $orig_file"
@@ -178,6 +231,8 @@ if [ ! -f "$gzvmdk_file" ]; then
 	gzip -c "$vmdk_file" > "$gzvmdk_file" || panic "cannot compress image"
 	ls -l "$gzvmdk_file"
 fi
+
+echo "FINISHED: $(get_time)"
 
 exit
 
