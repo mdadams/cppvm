@@ -56,7 +56,13 @@ get_checksum()
 
 usage()
 {
-	echo "usage: $0 -d work_dir -n vm_name -k ks_file -r sde_version"
+	cat <<- EOF
+	Usage:
+	$0 -d work_dir -n vm_name -k ks_file -r sde_version
+
+	Examples:
+	$0 -n f29_sde_4_0_19 -r 4.0.19 -k data/f29_minimal_xfce_sde.ks -d /opt/sde
+	EOF
 	exit 2
 }
 
