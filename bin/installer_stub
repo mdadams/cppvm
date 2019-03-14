@@ -1,20 +1,24 @@
 #! /usr/bin/env bash
 
-sde_version=4.0.19
-tmp_dir="/tmp/install_sde-$$"
-sde_install_dir="/opt/sde-$sde_version"
-log_file="/root/install_sde.log"
-tty_dev="/dev/tty10"
-
 panic()
 {
-	echo "ERROR: $@"
+	echo "ERROR: $@" 1>&2
 	exit 1
 }
 
+sde_repo_url="https://github.com/mdadams/sde.git"
+
+log_file=
+mvmdi_setup=
+
 test_mode=0
-while getopts n opt; do
+
+while getopts f:l:n opt; do
 	case $opt in
+	l)
+		log_file="$OPTARG";;
+	f)
+		mvmdi_setup="$OPTARG";;
 	n)
 		test_mode=1;;
 	esac
@@ -22,30 +26,79 @@ done
 shift $((OPTIND - 1))
 
 if [ "$test_mode" -ne 0 ]; then
-	tmp_dir="/tmp/install_sde"
-	sde_install_dir="/tmp/sde-$sde_version"
-	log_file="/tmp/install_sde.log"
+	if [ -z "$log_file" ]; then
+		panic "no log file specified"
+	fi
+	if [ -z "$mvmdi_setup" ]; then
+		panic "no setup file specified"
+	fi
 	tty_dev=$(tty) || panic "cannot get terminal"
+else
+	log_file="/root/install_sde.log"
+	mvmdi_setup="/root/mvmdi_setup.sh"
+	tty_dev="/dev/tty10"
 fi
 
-git_dir="$tmp_dir/cppvm"
 
-rm -f "$log_file"
+if [ -z "$log_file" ]; then
+	panic "no log file specified"
+fi
+if [ -z "$tty_dev" ]; then
+	panic "no TTY device specified"
+fi
+if [ -z "$mvmdi_setup" ]; then
+	panic "no setup file specified"
+fi
+
+if [ -f "$log_file" ]; then
+	rm -f "$log_file" || panic "cannot remove log file"
+fi
 
 {
 
-	mkdir -p "$tmp_dir" || \
-	  panic "cannot make directory $tmp_dir"
-	git -C "$tmp_dir" clone https://github.com/mdadams/cppvm.git "$git_dir" || \
-	  panic "cannot clone repository"
-
-	options=()
-	if [ "$test_mode" -ne 0 ]; then
-		options+=(-n)
+	if [ ! -f "$mvmdi_setup" ]; then
+		panic "missing MVMDI setup file"
 	fi
-	"$git_dir/bin/installer" -d "$sde_install_dir" -v "$sde_version" \
-	  -t "$tmp_dir/sde" "${options[@]}" || \
-	  panic "installer failed"
+	source "$mvmdi_setup"
+
+	if [ -z "$MVMDI_SDE_VERSION" ]; then
+		panic "no SDE version specified"
+	fi
+	sde_version="$MVMDI_SDE_VERSION"
+	if [ -z "$MVMDI_SDE_INSTALL_DIR" ]; then
+		panic "no SDE installation directory specified"
+	fi
+	sde_install_dir="$MVMDI_SDE_INSTALL_DIR"
+
+	tmp_dir=$(mktemp -d "/tmp/mvmdi-XXXXXXXXXX") || \
+	  panic "cannot make directory $tmp_dir"
+
+	sde_git_dir="$tmp_dir/sde"
+	sde_commit="v$sde_version"
+
+	sde_default_env=base
+	export SDE_GCC_USE_OLD_ABI=0
+	#export SDE_TEXLIVE_INSTALL=1
+	export SDE_TEXLIVE_INSTALL=0
+	export SDE_VIM_INSTALL=0
+	export SDE_CGAL_INSTALL=1
+	export SDE_LLVM_INSTALL_LLDB=0
+	export SDE_LLVM_INSTALL_TEST_SUITE=0
+	export SDE_HUB_INSTALL=0
+	export SDE_TMPDIR=/tmp
+	export SDE_INSTALL_GCC_ENABLE_LANGUAGES="c,c++"
+
+	git clone -q "$sde_repo_url" "$sde_git_dir" || \
+	  panic "cannot clone repository $sde_repo_url"
+
+	(cd "$sde_git_dir" && git checkout -q "$sde_commit") || \
+	  panic "cannot checkout branch/commit $sde_commit"
+
+	sde_install_opts=()
+	sde_install_opts+=(-f)
+	"$sde_git_dir/installer" \
+	  -d "$sde_install_dir" -e "$sde_default_env" \
+	  "${sde_install_opts[@]}" || \
+	  panic "cannot install SDE"
 
 } 2>&1 | tee -a "$log_file" > "$tty_dev"
-

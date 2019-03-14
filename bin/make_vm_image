@@ -56,10 +56,9 @@ get_checksum()
 
 usage()
 {
-	echo "usage: $0 -d work_dir -n vm_name -k ks_file"
+	echo "usage: $0 -d work_dir -n vm_name -k ks_file -r sde_version"
 	exit 2
 }
-
 
 cmd_dir=$(dirname "$0") || panic "cannot get program directory"
 root_dir="$cmd_dir/.."
@@ -72,10 +71,10 @@ ks_file=
 work_dir=
 name=
 mirror=muug
-sde_version=4.0.18
+sde_version=
 vmdi_dir=/var/lib/libvirt/images
 
-while getopts D:d:n:k:t:m:xz: opt; do
+while getopts D:d:n:k:t:m:xz:r: opt; do
 	case "$opt" in
 	d)
 		work_dir="$OPTARG";;
@@ -93,6 +92,8 @@ while getopts D:d:n:k:t:m:xz: opt; do
 		sparsify=0;;
 	z)
 		vmdi_dir="$OPTARG";;
+	r)
+		sde_version="$OPTARG";;
 	\?)
 		usage
 		break;;
@@ -104,6 +105,9 @@ if [ "$debug_level" -ge 1 ]; then
 	set -xv
 fi
 
+if [ -z "$sde_version" ]; then
+	usage "no SDE version specified"
+fi
 if [ -z "$work_dir" ]; then
 	usage "no work directory specified"
 fi
@@ -200,13 +204,30 @@ if [ ! -f "$disk_file" ]; then
 	  --initrd-inject "$ks_file" \
 	  --extra-args "ks=file:/$ks_base" \
 	  --extra-args "MVMDI_SDE_VERSION=$sde_version" \
+	  --extra-args "MVMDI_SDE_INSTALL_DIR=/opt/sde-$sde_version" \
 	  --events on_poweroff=preserve \
 	  || panic "virt-install failed"
 	vm_wait_for_shutoff "$name" || panic "wait for VM shut off failed"
 	echo "INSTALL FINISHED: $(get_time)"
-	if [ ! -f "$disk_file" ]; then
-		panic "disk image missing"
-	fi
+fi
+
+if [ ! -f "$disk_file" ]; then
+	panic "disk image missing"
+fi
+
+clean=1
+if [ "$clean" -ne 0 ]; then
+	for file in "$orig_file" "$qcow2_file" "$gzip_qcow2_file" "$vdi_file" \
+	  "$gzip_vdi_file" "$vmdk_file" "$gzip_vmdk_file" "$csum_file"; do
+		if [ -f "$file" ]; then
+			rm -f "$file" || panic "cannot remove file $file"
+		fi
+	done
+	ls -al "$image_dir"
+fi
+
+if [ ! -f "$orig_file" ]; then
+	echo "copying created disk image"
 	cp "$disk_file" "$orig_file" || panic "cannot copy file"
 	chmod a-w "$orig_file" || panic "cannot change file permissions"
 	echo "COPY FINISHED: $(get_time)"
@@ -214,61 +235,69 @@ if [ ! -f "$disk_file" ]; then
 	  panic "cannot make checksum file"
 fi
 
-vm_wait_for_shutoff "$name" || panic "wait for VM shut off failed"
-echo "WAIT FINISHED: $(get_time)"
-
 if [ ! -f "$orig_file" ]; then
 	panic "missing file $orig_file"
 fi
 
+vm_wait_for_shutoff "$name" || panic "wait for VM shut off failed"
+echo "WAIT FINISHED: $(get_time)"
+
 ls -l "$image_dir"
 
-for file in "$qcow2_file" "$vdi_file" "$gzip_vdi_file" "$vmdk_file" \
-  "$csum_file"; do
-	if [ -f "$file" ]; then
-		rm -f "$file" || panic "cannot remove file $file"
+if [ ! -f "$qcow2_file" ]; then
+	echo "Making sparse QCOW2 image"
+	if [ "$sparsify" -ne 0 ]; then
+		TMPDIR="$tmp_dir" \
+		  virt-sparsify "$orig_file" "$qcow2_file" || \
+		  panic "cannot sparsify VM image"
+	else
+		cp "$orig_file" "$qcow2_file" || \
+		  panic "cannot copy file"
 	fi
-done
-
-echo "Making sparse QCOW2 image"
-if [ "$sparsify" -ne 0 ]; then
-	TMPDIR="$tmp_dir" \
-	  virt-sparsify "$orig_file" "$qcow2_file" || \
-	  panic "cannot sparsify VM image"
-else
-	cp "$orig_file" "$qcow2_file" || \
-	  panic "cannot copy file"
+	ls -l "$qcow2_file"
 fi
-ls -l "$qcow2_file"
-echo "Compressing QCOW2 image"
-gzip "$qcow2_file" || panic "cannot compress image"
-ls -l "$gzip_qcow2_file"
 
-echo "Converting from QCOW2 to VDI"
-qemu-img convert -f qcow2 -O vdi \
-  "$qcow2_file" "$vdi_file" || \
-  panic "cannot convert image"
-ls -l "$vdi_file"
-echo "Compressing VDI image"
-gzip "$vdi_file" || panic "cannot compress image"
-ls -l "$gzip_vdi_file"
+if [ ! -f "$gzip_vdi_file" ]; then
+	echo "Converting from QCOW2 to VDI"
+	qemu-img convert -f qcow2 -O vdi \
+	  "$qcow2_file" "$vdi_file" || \
+	  panic "cannot convert image"
+	ls -l "$vdi_file"
+	echo "Compressing VDI image"
+	gzip "$vdi_file" || panic "cannot compress image"
+	ls -l "$gzip_vdi_file"
+fi
 
-echo "Converting from QCOW2 to VMDK"
-qemu-img convert -f qcow2 -O vmdk \
-  -o adapter_type=lsilogic,subformat=streamOptimized,compat6 \
-  "$qcow2_file" "$vmdk_file" || \
-  panic "cannot convert image"
-ls -l "$vmdk_file"
-echo "Compressing VMDK image"
-gzip "$vmdk_file" || panic "cannot compress image"
-ls -l "$gzip_vmdk_file"
+if [ ! -f "$gzip_vmdk_file" ]; then
+	echo "Converting from QCOW2 to VMDK"
+	qemu-img convert -f qcow2 -O vmdk \
+	  -o adapter_type=lsilogic,subformat=streamOptimized,compat6 \
+	  "$qcow2_file" "$vmdk_file" || \
+	  panic "cannot convert image"
+	ls -l "$vmdk_file"
+	echo "Compressing VMDK image"
+	gzip "$vmdk_file" || panic "cannot compress image"
+	ls -l "$gzip_vmdk_file"
+fi
+
+if [ ! -f "$gzip_qcow2_file" ]; then
+	echo "Compressing QCOW2 image"
+	gzip "$qcow2_file" || panic "cannot compress image"
+	ls -l "$gzip_qcow2_file"
+fi
 
 echo "List files"
 ls -l "$image_dir"
 
-(cd "$image_dir" && \
-  sha512sum "$orig_file" "$qcow2_file" "$gzip_vdi_file" "$vmdk_file") \
-  > "$csum_file" || \
+args=()
+for file in "$orig_file" "$qcow2_file" "$gzip_qcow2_file" \
+  "$vdi_file" "$gzip_vdi_file" "$vmdk_file" "$gzip_vmdk_file"; do
+	if [ -f "$file" ]; then
+		args+=($(basename "$file")) || panic
+	fi
+done
+
+(cd "$image_dir" && sha512sum "${args[@]}") > "$csum_file" || \
   panic "cannot generate checksum file"
 
 echo "FINISHED: $(get_time)"

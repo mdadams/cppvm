@@ -71,6 +71,7 @@ pwpolicy luks --minlen=6 --minquality=1 --notstrict --nochanges --notempty
 %end
 
 %pre
+################################################################################
 set -- `cat /proc/cmdline`
 
 for x in $*; do 
@@ -81,12 +82,22 @@ for x in $*; do
 	esac; 
 done
 
+################################################################################
+%end
+
 %post --interpreter /usr/bin/bash --nochroot
+################################################################################
+
 cp /tmp/mvmdi_setup.sh /mnt/sysimage/root/mvmdi_setup.sh
 
+################################################################################
+%end
+
 %post --interpreter /usr/bin/bash --log /root/mvmdi.log
+################################################################################
 
 source /root/mvmdi_setup.sh
 echo "SDE version: $MVMDI_SDE_VERSION"
 
+################################################################################
 %end
