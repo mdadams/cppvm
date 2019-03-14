@@ -57,34 +57,6 @@ firefox
 thunar-volman
 udisks2
 gvfs
-wget
-git
-gcc
-gcc-c++
-make
-texinfo
-python-devel
-p7zip
-p7zip-plugins
-gmp-devel
-mpfr-devel
-freeglut-devel
-glew-devel
-autoconf
-automake
-libcap-devel
-libtool
-libxslt
-docbook-style-xsl
-ncurses-devel
-qt5-devel
-bzip2
-xz
-evince
-a2ps
-texlive-pdfjam
-zerofree
-lsof
 
 %end
 
@@ -98,59 +70,23 @@ pwpolicy user --minlen=6 --minquality=1 --notstrict --nochanges --emptyok
 pwpolicy luks --minlen=6 --minquality=1 --notstrict --nochanges --notempty
 %end
 
-%post --interpreter /usr/bin/bash --log /root/install_sde_stub.log
-########## START OF installer_stub ##########
+%pre
+set -- `cat /proc/cmdline`
 
-#! /usr/bin/env bash
-
-sde_version=4.0.19
-tmp_dir="/tmp/install_sde-$$"
-sde_install_dir="/opt/sde-$sde_version"
-log_file="/root/install_sde.log"
-tty_dev="/dev/tty10"
-
-panic()
-{
-	echo "ERROR: $@"
-	exit 1
-}
-
-test_mode=0
-while getopts n opt; do
-	case $opt in
-	n)
-		test_mode=1;;
-	esac
+for x in $*; do 
+	case $x in MVMDI_*) 
+		#eval $x
+		echo $x >> /tmp/mvmdi_setup.sh
+		;; 
+	esac; 
 done
-shift $((OPTIND - 1))
 
-if [ "$test_mode" -ne 0 ]; then
-	tmp_dir="/tmp/install_sde"
-	sde_install_dir="/tmp/sde-$sde_version"
-	log_file="/tmp/install_sde.log"
-	tty_dev=$(tty) || panic "cannot get terminal"
-fi
+%post --interpreter /usr/bin/bash --nochroot
+cp /tmp/mvmdi_setup.sh /mnt/sysimage/root/mvmdi_setup.sh
 
-git_dir="$tmp_dir/cppvm"
+%post --interpreter /usr/bin/bash --log /root/mvmdi.log
 
-rm -f "$log_file"
+source /root/mvmdi_setup.sh
+echo "SDE version: $MVMDI_SDE_VERSION"
 
-{
-
-	mkdir -p "$tmp_dir" || \
-	  panic "cannot make directory $tmp_dir"
-	git -C "$tmp_dir" clone https://github.com/mdadams/cppvm.git "$git_dir" || \
-	  panic "cannot clone repository"
-
-	options=()
-	if [ "$test_mode" -ne 0 ]; then
-		options+=(-n)
-	fi
-	"$git_dir/bin/installer" -d "$sde_install_dir" -v "$sde_version" \
-	  -t "$tmp_dir/sde" "${options[@]}" || \
-	  panic "installer failed"
-
-} 2>&1 | tee -a "$log_file" > "$tty_dev"
-
-########## END OF installer_stub ##########
 %end

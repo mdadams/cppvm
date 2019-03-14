@@ -72,8 +72,10 @@ ks_file=
 work_dir=
 name=
 mirror=muug
+sde_version=4.0.18
+vmdi_dir=/var/lib/libvirt/images
 
-while getopts D:d:n:k:t:m:x opt; do
+while getopts D:d:n:k:t:m:xz: opt; do
 	case "$opt" in
 	d)
 		work_dir="$OPTARG";;
@@ -89,6 +91,8 @@ while getopts D:d:n:k:t:m:x opt; do
 		mirror="$OPTARG";;
 	x)
 		sparsify=0;;
+	z)
+		vmdi_dir="$OPTARG";;
 	\?)
 		usage
 		break;;
@@ -147,14 +151,15 @@ image_dir="$work_dir/images"
 netinst_base=$(basename "$netinst_url") || panic "cannot get base name"
 netinst_file="$download_dir/$netinst_base"
 
-disk_file="$image_dir/$name.qcow2"
-orig_file="$image_dir/${name}-original.qcow2"
-orig_csum_file="$image_dir/${name}-original.qcow2-SHA512SUM"
-sparse_file="$image_dir/${name}-sparsified.qcow2"
+disk_file="$vmdi_dir/$name.qcow2"
+orig_file="$image_dir/$name-original.qcow2"
+orig_csum_file="$orig_file-SHA512SUM"
+qcow2_file="$image_dir/$name.qcow2"
+gzip_qcow2_file="$qcow2_file.gz"
 vmdk_file="$image_dir/$name.vmdk"
-gzvmdk_file="$image_dir/$name.vmdk.gz"
+gzip_vmdk_file="$vmdk_file.gz"
 vdi_file="$image_dir/$name.vdi"
-gzvdi_file="$image_dir/$name.vdi.gz"
+gzip_vdi_file="$vdi_file.gz"
 csum_file="$image_dir/SHA512SUM"
 
 ks_base=$(basename "$ks_file") || \
@@ -194,6 +199,7 @@ if [ ! -f "$disk_file" ]; then
 	  --location "$netinst_file" \
 	  --initrd-inject "$ks_file" \
 	  --extra-args "ks=file:/$ks_base" \
+	  --extra-args "MVMDI_SDE_VERSION=$sde_version" \
 	  --events on_poweroff=preserve \
 	  || panic "virt-install failed"
 	vm_wait_for_shutoff "$name" || panic "wait for VM shut off failed"
@@ -216,57 +222,52 @@ if [ ! -f "$orig_file" ]; then
 fi
 
 ls -l "$image_dir"
-#ls -l "$orig_file"
 
-for file in "$sparse_file" "$vdi_file" "$gzvdi_file" "$vmdk_file" \
+for file in "$qcow2_file" "$vdi_file" "$gzip_vdi_file" "$vmdk_file" \
   "$csum_file"; do
 	if [ -f "$file" ]; then
 		rm -f "$file" || panic "cannot remove file $file"
 	fi
 done
 
+echo "Making sparse QCOW2 image"
 if [ "$sparsify" -ne 0 ]; then
 	TMPDIR="$tmp_dir" \
-	  virt-sparsify "$orig_file" "$sparse_file" || \
+	  virt-sparsify "$orig_file" "$qcow2_file" || \
 	  panic "cannot sparsify VM image"
 else
-	cp "$orig_file" "$sparse_file" || \
+	cp "$orig_file" "$qcow2_file" || \
 	  panic "cannot copy file"
 fi
-
-#ls -l "$sparse_file"
-ls -l "$image_dir"
+ls -l "$qcow2_file"
+echo "Compressing QCOW2 image"
+gzip "$qcow2_file" || panic "cannot compress image"
+ls -l "$gzip_qcow2_file"
 
 echo "Converting from QCOW2 to VDI"
 qemu-img convert -f qcow2 -O vdi \
-  "$sparse_file" "$vdi_file" || \
+  "$qcow2_file" "$vdi_file" || \
   panic "cannot convert image"
-
-#ls -l "$vdi_file"
-ls -l "$image_dir"
-
+ls -l "$vdi_file"
 echo "Compressing VDI image"
-gzip -c "$vdi_file" > "$gzvdi_file" || \
-  panic "cannot compress image"
-ls -l "$gzvdi_file"
-rm -f "$vdi_file" || \
-  panic "cannot remove file $vdi_file"
+gzip "$vdi_file" || panic "cannot compress image"
+ls -l "$gzip_vdi_file"
 
 echo "Converting from QCOW2 to VMDK"
 qemu-img convert -f qcow2 -O vmdk \
   -o adapter_type=lsilogic,subformat=streamOptimized,compat6 \
-  "$sparse_file" "$vmdk_file" || \
+  "$qcow2_file" "$vmdk_file" || \
   panic "cannot convert image"
+ls -l "$vmdk_file"
+echo "Compressing VMDK image"
+gzip "$vmdk_file" || panic "cannot compress image"
+ls -l "$gzip_vmdk_file"
 
-#ls -l "$vmdk_file"
+echo "List files"
 ls -l "$image_dir"
 
-#echo "Compressing VMDK image"
-#gzip -c "$vmdk_file" > "$gzvmdk_file" || panic "cannot compress image"
-#ls -l "$gzvmdk_file"
-
 (cd "$image_dir" && \
-  sha512sum "$orig_file" "$sparse_file" "$gzvdi_file" "$vmdk_file") \
+  sha512sum "$orig_file" "$qcow2_file" "$gzip_vdi_file" "$vmdk_file") \
   > "$csum_file" || \
   panic "cannot generate checksum file"
 
