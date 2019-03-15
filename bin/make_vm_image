@@ -61,7 +61,7 @@ usage()
 	$0 -d work_dir -n vm_name -k ks_file -r sde_version
 
 	Examples:
-	$0 -n f29_sde_4_0_19 -r 4.0.19 -k data/f29_minimal_xfce_sde.ks -d /opt/sde
+	$0 -n f29_sde_4_0_19 -r 4.0.19 -k data/f29_minimal_xfce_sde.ks -d workdir
 	EOF
 	exit 2
 }
@@ -210,7 +210,7 @@ if [ ! -f "$disk_file" ]; then
 	  --initrd-inject "$ks_file" \
 	  --extra-args "ks=file:/$ks_base" \
 	  --extra-args "MVMDI_SDE_VERSION=$sde_version" \
-	  --extra-args "MVMDI_SDE_INSTALL_DIR=/opt/sde-$sde_version" \
+	  --extra-args "MVMDI_SDE_INSTALL_DIR=/opt/sde" \
 	  --events on_poweroff=preserve \
 	  || panic "virt-install failed"
 	vm_wait_for_shutoff "$name" || panic "wait for VM shut off failed"
