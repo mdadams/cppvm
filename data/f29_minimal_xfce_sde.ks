@@ -227,6 +227,8 @@ fi
 	export SDE_LLVM_INSTALL_TEST_SUITE=0
 	export SDE_HUB_INSTALL=0
 	export SDE_TMPDIR=/tmp
+	export SDE_GCC_TRUNK_INSTALL=0
+	export SDE_CLANG_TRUNK_INSTALL=0
 	export SDE_INSTALL_GCC_ENABLE_LANGUAGES="c,c++,fortran"
 
 	git clone -q "$sde_repo_url" "$sde_git_dir" || \
