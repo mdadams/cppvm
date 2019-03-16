@@ -61,7 +61,7 @@ usage()
 	$0 -d work_dir -n vm_name -k ks_file -r sde_version
 
 	Examples:
-	$0 -n f29_sde_4_0_19 -r 4.0.19 -k data/f29_minimal_xfce_sde.ks -d workdir
+	$0 -n f29_sde_4_0_20 -r 4.0.20 -k data/f29_minimal_xfce_sde.ks -d workdir
 	EOF
 	exit 2
 }
@@ -308,7 +308,7 @@ done
 
 echo "FINISHED: $(get_time)"
 
-cleanup=0
+cleanup=1
 if [ "$cleanup" -ne 0 ]; then
 	state=$(vm_get_state "$name") || panic "cannot get VM state"
 	if [ "$state" != shut_off ]; then
