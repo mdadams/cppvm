@@ -82,18 +82,28 @@ fi
 	echo "SDE commit: $sde_commit"
 
 	sde_default_env=base
-	export SDE_GCC_USE_OLD_ABI=0
+
+	# basic settings
+	export SDE_TMPDIR=/tmp
+
+	# select some packages for installation
 	#export SDE_TEXLIVE_INSTALL=1
 	export SDE_TEXLIVE_INSTALL=0
 	export SDE_VIM_INSTALL=0
 	export SDE_CGAL_INSTALL=1
+	export SDE_HUB_INSTALL=0
+
+	# GCC settings
+	export SDE_INSTALL_GCC_ENABLE_LANGUAGES="c,c++,fortran"
+	export SDE_GCC_USE_OLD_ABI=0
+	export SDE_INSTALL_GCC_STRIPPED=1
+	export SDE_GCC_TRUNK_INSTALL=0
+
+	# LLVM settings
 	export SDE_LLVM_INSTALL_LLDB=0
 	export SDE_LLVM_INSTALL_TEST_SUITE=0
-	export SDE_HUB_INSTALL=0
-	export SDE_TMPDIR=/tmp
-	export SDE_GCC_TRUNK_INSTALL=0
+	export SDE_INSTALL_CLANG_STRIPPED=1
 	export SDE_CLANG_TRUNK_INSTALL=0
-	export SDE_INSTALL_GCC_ENABLE_LANGUAGES="c,c++,fortran"
 
 	git clone -q "$sde_repo_url" "$sde_git_dir" || \
 	  panic "cannot clone repository $sde_repo_url"
