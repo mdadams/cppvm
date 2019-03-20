@@ -308,6 +308,19 @@ done
 
 echo "FINISHED: $(get_time)"
 
+cleanup=1
+if [ "$cleanup" -ne 0 ]; then
+	state=$(vm_get_state "$name") || panic "cannot get VM state"
+	if [ "$state" != shut_off ]; then
+		virsh destroy "$name" || \
+		  panic "cannot shut off VM"
+	fi
+	virsh undefine "$name" || \
+	  panic "virsh undefine failed"
+	virsh vol-delete --pool default "$name.qcow2" || \
+	  panic "virsh vol-delete failed"
+fi
+
 exit
 
 ##########
