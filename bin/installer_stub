@@ -8,12 +8,13 @@ panic()
 
 sde_repo_url="https://github.com/mdadams/sde.git"
 
+tmp_dir_base=
 log_file=
 mvmdi_setup=
 
 test_mode=0
 
-while getopts f:l:n opt; do
+while getopts f:l:nt: opt; do
 	case $opt in
 	l)
 		log_file="$OPTARG";;
@@ -21,6 +22,8 @@ while getopts f:l:n opt; do
 		mvmdi_setup="$OPTARG";;
 	n)
 		test_mode=1;;
+	t)
+		tmp_dir_base="$OPTARG";;
 	esac
 done
 shift $((OPTIND - 1))
@@ -32,11 +35,15 @@ if [ "$test_mode" -ne 0 ]; then
 	if [ -z "$mvmdi_setup" ]; then
 		panic "no setup file specified"
 	fi
+	if [ -z "$tmp_dir_base" ]; then
+		panic "no temporary directory specified"
+	fi
 	tty_dev=$(tty) || panic "cannot get terminal"
 else
 	log_file="/root/install_sde.log"
 	mvmdi_setup="/root/mvmdi_setup.sh"
 	tty_dev="/dev/tty10"
+	tmp_dir_base="/tmp"
 fi
 
 
@@ -70,7 +77,7 @@ fi
 	fi
 	sde_install_dir="$MVMDI_SDE_INSTALL_DIR"
 
-	tmp_dir=$(mktemp -d "/tmp/mvmdi-XXXXXXXXXX") || \
+	tmp_dir=$(mktemp -d "$tmp_dir_base/mvmdi-XXXXXXXXXX") || \
 	  panic "cannot make directory $tmp_dir"
 
 	sde_git_dir="$tmp_dir/sde"
@@ -80,11 +87,12 @@ fi
 	echo "SDE installation directory: $sde_install_dir"
 	echo "SDE Git repository: $sde_repo_url"
 	echo "SDE commit: $sde_commit"
+	echo "temporary directory: $tmp_dir_base"
 
 	sde_default_env=base
 
 	# basic settings
-	export SDE_TMPDIR=/tmp
+	export SDE_TMPDIR="$tmp_dir_base"
 
 	# select some packages for installation
 	#export SDE_TEXLIVE_INSTALL=1
