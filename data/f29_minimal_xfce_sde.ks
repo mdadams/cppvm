@@ -133,7 +133,6 @@ echo "SDE installation directory: $MVMDI_SDE_INSTALL_DIR"
 
 %post --interpreter /usr/bin/bash --log /root/install_sde.log
 ########## START OF installer_stub ##########
-
 #! /usr/bin/env bash
 
 panic()
@@ -263,6 +262,5 @@ fi
 	  panic "cannot install SDE"
 
 } 2>&1 | tee -a "$log_file" > "$tty_dev"
-
 ########## END OF installer_stub ##########
 %end
