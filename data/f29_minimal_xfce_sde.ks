@@ -51,6 +51,7 @@ xfconf
 xfdesktop
 xfwm4
 xfce4-terminal
+xfce4-appfinder
 firefox
 xfce4-pulseaudio-plugin
 firefox
@@ -59,6 +60,7 @@ udisks2
 gvfs
 wget
 git
+hub
 gcc
 gcc-c++
 make
