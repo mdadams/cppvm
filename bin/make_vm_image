@@ -56,12 +56,14 @@ get_checksum()
 
 usage()
 {
+	local data_dir
+	data_dir=$(realpath "$cmd_dir/../data") || data_dir=
 	cat <<- EOF
 	Usage:
 	$0 -d work_dir -n vm_name -k ks_file -r sde_version
 
 	Examples:
-	$0 -n f29_sde_4_0_31 -r 4.0.31 -k $cmd_dir/../data/f29_minimal_xfce_sde.ks -d workdir
+	$0 -n f29_sde_4_0_31 -r 4.0.31 -k $data_dir/f29_minimal_xfce_sde.ks -d workdir
 	EOF
 	exit 2
 }
