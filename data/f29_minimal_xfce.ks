@@ -6,7 +6,7 @@ clearpart --all --drives=sda
 # Use graphical install
 graphical
 # Use network installation
-url --url="https://sjc.edge.kernel.org/fedora-buffet/fedora/linux/releases/29/Everything/x86_64/os/"
+url --url="__KS_URL__"
 # Keyboard layouts
 keyboard --vckeymap=us --xlayouts='us'
 # System language

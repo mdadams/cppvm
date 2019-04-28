@@ -126,7 +126,6 @@ fi
 if [ -z "$ks_file" ]; then
 	usage "no kickstart file specified"
 fi
-ks_file=$(realpath "$ks_file") || panic "cannot get realpath"
 
 if [ ! -f "$ks_file" ]; then
 	panic "kickstart file is missing"
@@ -135,15 +134,22 @@ fi
 if [ -z "$tmp_dir" ]; then
 	tmp_dir="${TMPDIR:-/tmp}"
 fi
+tmp_dir=$(realpath "$tmp_dir") || panic "cannot get realpath"
 
 case "$mirror" in
 muug)
-	netinst_url="https://muug.ca/mirror/fedora/linux/releases/29/Everything/x86_64/iso/Fedora-Everything-netinst-x86_64-29-1.2.iso"
+	mirror_base_url="https://muug.ca/mirror/fedora/linux"
+	;;
+kernel)
+	mirror_base_url="https://ewr.edge.kernel.org/fedora-buffet/fedora/linux/"
 	;;
 *)
-	netinst_url="https://download.fedoraproject.org/pub/fedora/linux/releases/29/Everything/x86_64/iso/Fedora-Everything-netinst-x86_64-29-1.2.iso"
+	mirror_base_url="https://download.fedoraproject.org/pub/fedora/linux"
 	;;
 esac
+
+ks_url="$mirror_base_url/releases/29/Everything/x86_64/os/"
+netinst_url="$mirror_base_url/releases/29/Everything/x86_64/iso/Fedora-Everything-netinst-x86_64-29-1.2.iso"
 
 cat <<- EOF
 work directory: $work_dir
@@ -152,13 +158,18 @@ VM name: $name
 temporary directory: $tmp_dir
 sparsify: $sparsify
 mirror: $mirror
+mirror base URL: $mirror_base_url
 netinst URL: $netinst_url
+kickstart URL: $ks_url
 EOF
 
 #exit
 
 download_dir="$work_dir/downloads"
 image_dir="$work_dir/images"
+gen_ks_file="$work_dir/kickstart.ks"
+gen_ks_base=$(basename "$gen_ks_file") || \
+  panic "cannot get base name"
 
 netinst_base=$(basename "$netinst_url") || panic "cannot get base name"
 netinst_file="$download_dir/$netinst_base"
@@ -174,9 +185,6 @@ vdi_file="$image_dir/$name.vdi"
 gzip_vdi_file="$vdi_file.gz"
 csum_file="$image_dir/SHA512SUM"
 
-ks_base=$(basename "$ks_file") || \
-  panic "cannot get base name"
-
 for dir in "$work_dir" "$download_dir" "$image_dir"; do
 	if [ ! -d "$dir" ]; then
 		mkdir "$dir" || panic "cannot make directory $dir"
@@ -186,8 +194,17 @@ done
 
 echo "START TIME: $(get_time)"
 
+ls -l "$work_dir"
 ls -l "$download_dir"
 ls -l "$image_dir"
+
+echo "Preparing kickstart file"
+if [ -f "$gen_ks_file" ]; then
+	rm -f "$gen_ks_file" || panic "cannot remove temporary kickstart file"
+fi
+cp "$ks_file" "$gen_ks_file" || panic "cannot copy kickstart file"
+sed -i "s|__KS_URL__|$ks_url|g" "$gen_ks_file" || \
+  panic "cannot update temporary kickstart file"
 
 if [ ! -f "$netinst_file" ]; then
 	wget -O "$netinst_file" "$netinst_url" || \
@@ -200,21 +217,23 @@ if [ ! -f "$disk_file" ]; then
 			rm -f "$file" || panic "cannot remove file $file"
 		fi
 	done
-	virt-install \
-	  --name "$name" \
-	  --memory 16384 \
-	  --vcpus 4 \
-	  --disk path=$disk_file,format=qcow2,size=16 \
-	  --os-type linux \
-	  --network bridge=virbr0 \
-	  --graphics spice \
-	  --location "$netinst_file" \
-	  --initrd-inject "$ks_file" \
-	  --extra-args "ks=file:/$ks_base" \
-	  --extra-args "MVMDI_SDE_VERSION=$sde_version" \
-	  --extra-args "MVMDI_SDE_INSTALL_DIR=/opt/sde" \
-	  --events on_poweroff=preserve \
-	  || panic "virt-install failed"
+
+	command=(virt-install)
+	command+=(--name "$name")
+	command+=(--memory 16384)
+	command+=(--vcpus 4)
+	command+=(--disk path=$disk_file,format=qcow2,size=16)
+	command+=(--os-type linux)
+	command+=(--network bridge=virbr0)
+	command+=(--graphics spice)
+	command+=(--location "$netinst_file")
+	command+=(--initrd-inject "$gen_ks_file")
+	command+=(--extra-args "ks=file:/$gen_ks_base")
+	command+=(--extra-args "MVMDI_SDE_VERSION=$sde_version")
+	command+=(--extra-args "MVMDI_SDE_INSTALL_DIR=/opt/sde")
+	command+=(--events on_poweroff=preserve)
+	echo "COMMAND: ${command[*]}"
+	"${command[@]}" || panic "virt-install failed"
 	vm_wait_for_shutoff "$name" || panic "wait for VM shut off failed"
 	echo "INSTALL FINISHED: $(get_time)"
 fi
