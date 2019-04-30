@@ -16,6 +16,8 @@ lang en_US.UTF-8
 #shutdown
 poweroff
 
+repo --name=updates
+
 # Network information
 network  --bootproto=dhcp --device=ens3 --ipv6=auto --activate
 network  --hostname=cpp

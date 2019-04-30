@@ -63,7 +63,7 @@ usage()
 	$0 -d work_dir -n vm_name -k ks_file -r sde_version
 
 	Examples:
-	$0 -n f29_sde_4_0_32 -r 4.0.32 -k $data_dir/f29_minimal_xfce_sde.ks -d workdir
+	$0 -n f29_sde_4_0_33 -r 4.0.33 -k $data_dir/f29_minimal_xfce_sde.ks -d workdir
 	EOF
 	exit 2
 }
