@@ -51,12 +51,13 @@ xfconf
 xfdesktop
 xfwm4
 xfce4-terminal
-firefox
+xfce4-appfinder
 xfce4-pulseaudio-plugin
-firefox
 thunar-volman
 udisks2
 gvfs
+firefox
+net-tools
 
 %end
 

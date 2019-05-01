@@ -1,0 +1,51 @@
+#! /usr/bin/env bash
+
+panic()
+{
+	echo "ERROR: $@"
+	exit 1
+}
+
+fedora_release=30
+mirror="muug"
+libvirt_image_dir="/var/lib/libvirt/images"
+work_dir="$1"
+
+if [ $# -ne 1 ]; then
+	panic "no work directory specified"
+fi
+
+case "$mirror" in
+kernel)
+	mirror_base_url="https://ewr.edge.kernel.org/fedora-buffet/fedora/linux";;
+muug)
+	mirror_base_url="";;
+*)
+	panic "unknown mirror";;
+esac
+
+download_dir="$work_dir/downloads"
+image_dir="$work_dir/images"
+
+for dir in "$download_dir" "$image_dir"; do
+	if [ ! -d "$dir" ]; then
+		mkdir -p "$dir" || panic
+	fi
+done
+
+netinstall_image_url="$mirror_base_url/releases/$fedora_release/Everything/x86_64/iso/Fedora-Everything-netinst-x86_64-$fedora_release-1.2.iso"
+
+netinstall_file="$download_dir/$(basename "$netinstall_image_url")"
+
+if [ ! -f "$netinstall_file" ]; then
+	wget -O "$netinstall_file" "$netinstall_url" || panic "wget failed"
+fi
+
+name="f${fedora_release}"
+
+virt-install --name $name --memory 16384 --vcpus 4 \
+  --disk path="$libvirt_image_dir/$name.qcow2,format=qcow2,size=16" \
+  --os-type linux --network bridge=virbr0 --graphics spice \
+  --cdrom "$netinstall_file" \
+  --events on_poweroff=preserve
+

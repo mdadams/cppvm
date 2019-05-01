@@ -63,7 +63,10 @@ usage()
 	$0 -d work_dir -n vm_name -k ks_file -r sde_version
 
 	Examples:
-	$0 -n f29_sde_4_0_33 -r 4.0.33 -k $data_dir/f29_minimal_xfce_sde.ks -d workdir
+	$0 -n f28_xfce -R 28 -r 0.0.0 -k $data_dir/minimal_xfce.ks -d workdir
+	$0 -n f29_xfce -R 29 -r 0.0.0 -k $data_dir/minimal_xfce.ks -d workdir
+	$0 -n f30_xfce -R 30 -r 0.0.0 -k $data_dir/minimal_xfce.ks -d workdir
+	$0 -n f29_sde_4_0_33 -R 29 -r 4.0.33 -k $data_dir/minimal_xfce_sde.ks -d workdir
 	EOF
 	exit 2
 }
@@ -81,8 +84,9 @@ name=
 mirror=muug
 sde_version=
 vmdi_dir=/var/lib/libvirt/images
+fedora_release=
 
-while getopts D:d:n:k:t:m:xz:r: opt; do
+while getopts D:d:n:k:t:m:xz:r:R: opt; do
 	case "$opt" in
 	d)
 		work_dir="$OPTARG";;
@@ -102,6 +106,8 @@ while getopts D:d:n:k:t:m:xz:r: opt; do
 		vmdi_dir="$OPTARG";;
 	r)
 		sde_version="$OPTARG";;
+	R)
+		fedora_release="$OPTARG";;
 	\?)
 		usage
 		break;;
@@ -111,6 +117,10 @@ shift $((OPTIND - 1))
 
 if [ "$debug_level" -ge 1 ]; then
 	set -xv
+fi
+
+if [ -z "$fedora_release" ]; then
+	usage "no Fedora release specified"
 fi
 
 if [ -z "$sde_version" ]; then
@@ -141,15 +151,26 @@ muug)
 	mirror_base_url="https://muug.ca/mirror/fedora/linux"
 	;;
 kernel)
-	mirror_base_url="https://ewr.edge.kernel.org/fedora-buffet/fedora/linux/"
+	mirror_base_url="https://ewr.edge.kernel.org/fedora-buffet/fedora/linux"
 	;;
 *)
 	mirror_base_url="https://download.fedoraproject.org/pub/fedora/linux"
 	;;
 esac
 
-ks_url="$mirror_base_url/releases/29/Everything/x86_64/os/"
-netinst_url="$mirror_base_url/releases/29/Everything/x86_64/iso/Fedora-Everything-netinst-x86_64-29-1.2.iso"
+#case "$fedora_release" in
+#28)
+#	netinst_version="1.1";;
+#29)
+#	netinst_version="1.2";;
+#30)
+#	netinst_version="1.2";;
+#*)
+#	panic;;
+#esac
+
+ks_url="$mirror_base_url/releases/$fedora_release/Everything/x86_64/os/"
+#netinst_url="$mirror_base_url/releases/$fedora_release/Everything/x86_64/iso/Fedora-Everything-netinst-x86_64-$fedora_release-$netinst_version.iso"
 
 cat <<- EOF
 work directory: $work_dir
@@ -159,7 +180,6 @@ temporary directory: $tmp_dir
 sparsify: $sparsify
 mirror: $mirror
 mirror base URL: $mirror_base_url
-netinst URL: $netinst_url
 kickstart URL: $ks_url
 EOF
 
@@ -171,8 +191,10 @@ gen_ks_file="$work_dir/kickstart.ks"
 gen_ks_base=$(basename "$gen_ks_file") || \
   panic "cannot get base name"
 
-netinst_base=$(basename "$netinst_url") || panic "cannot get base name"
-netinst_file="$download_dir/$netinst_base"
+#if [ -z "$netinst_file" ]; then
+#	netinst_base=$(basename "$netinst_url") || panic "cannot get base name"
+#	netinst_file="$download_dir/$netinst_base"
+#fi
 
 disk_file="$vmdi_dir/$name.qcow2"
 orig_file="$image_dir/$name-original.qcow2"
@@ -206,10 +228,10 @@ cp "$ks_file" "$gen_ks_file" || panic "cannot copy kickstart file"
 sed -i "s|__KS_URL__|$ks_url|g" "$gen_ks_file" || \
   panic "cannot update temporary kickstart file"
 
-if [ ! -f "$netinst_file" ]; then
-	wget -O "$netinst_file" "$netinst_url" || \
-	  panic "cannot download netinst"
-fi
+#if [ ! -f "$netinst_file" ]; then
+#	wget -O "$netinst_file" "$netinst_url" || \
+#	  panic "cannot download netinst"
+#fi
 
 if [ ! -f "$disk_file" ]; then
 	for file in "$orig_file" "$orig_csum_file"; do
@@ -219,19 +241,31 @@ if [ ! -f "$disk_file" ]; then
 	done
 
 	command=(virt-install)
+
+	command+=(--debug)
 	command+=(--name "$name")
+
+	command+=(--os-type linux)
+	# The following causes dracut initqueue timeout.
+	#command+=(--os-variant "fedora$fedora_release")
+
 	command+=(--memory 16384)
 	command+=(--vcpus 4)
 	command+=(--disk path=$disk_file,format=qcow2,size=16)
-	command+=(--os-type linux)
 	command+=(--network bridge=virbr0)
 	command+=(--graphics spice)
-	command+=(--location "$netinst_file")
+
+	#command+=(--location "$netinst_file")
+	#command+=(--location "$netinst_file",kernel=isolinux/vmlinuz,initrd=isolinux/initrd.gz)
+	#command+=(--location "$netinst_url")
+	command+=(--location "$ks_url")
 	command+=(--initrd-inject "$gen_ks_file")
 	command+=(--extra-args "ks=file:/$gen_ks_base")
 	command+=(--extra-args "MVMDI_SDE_VERSION=$sde_version")
 	command+=(--extra-args "MVMDI_SDE_INSTALL_DIR=/opt/sde")
+
 	command+=(--events on_poweroff=preserve)
+
 	echo "COMMAND: ${command[*]}"
 	"${command[@]}" || panic "virt-install failed"
 	vm_wait_for_shutoff "$name" || panic "wait for VM shut off failed"
@@ -343,7 +377,3 @@ if [ "$cleanup" -ne 0 ]; then
 fi
 
 exit
-
-##########
-  --cdrom "$netinst_file" \
-

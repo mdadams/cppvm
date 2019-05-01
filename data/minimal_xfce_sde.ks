@@ -16,7 +16,8 @@ lang en_US.UTF-8
 #shutdown
 poweroff
 
-repo --name=updates
+# Uncomment the following line to allow the installation of updates.
+#repo --name=updates
 
 # Network information
 network  --bootproto=dhcp --device=ens3 --ipv6=auto --activate
@@ -54,12 +55,11 @@ xfdesktop
 xfwm4
 xfce4-terminal
 xfce4-appfinder
-firefox
 xfce4-pulseaudio-plugin
-firefox
 thunar-volman
 udisks2
 gvfs
+firefox
 wget
 git
 hub
@@ -87,8 +87,8 @@ xz
 evince
 a2ps
 texlive-pdfjam
-zerofree
 lsof
+net-tools
 
 %end
 
