@@ -75,13 +75,12 @@ usage()
 	$0 -n f29_xfce -R 29 -r 0.0.0 -k $data_dir/minimal_xfce.ks -d workdir
 	$0 -n f30_xfce -R 30 -r 0.0.0 -k $data_dir/minimal_xfce.ks -d workdir
 
-	$0 -n f29_xfce -N -R 29 -r 0.0.0 -k $data_dir/minimal_xfce.ks -d workdir
-
 	$0 -n f29_sde_${sde_name} -R 29 -r ${sde_version} -k $data_dir/minimal_xfce_sde.ks -d workdir
-	$0 -n f29_sde_${sde_name} -N -R 29 -r ${sde_version} -k $data_dir/minimal_xfce_sde.ks -d workdir
 	EOF
 	exit 2
 }
+#	$0 -n f29_sde_${sde_name} -N -R 29 -r ${sde_version} -k $data_dir/minimal_xfce_sde.ks -d workdir
+#	$0 -n f29_xfce -N -R 29 -r 0.0.0 -k $data_dir/minimal_xfce.ks -d workdir
 
 cmd_dir=$(dirname "$0") || panic "cannot get program directory"
 root_dir="$cmd_dir/.."

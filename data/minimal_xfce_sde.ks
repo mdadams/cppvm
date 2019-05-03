@@ -6,7 +6,8 @@ clearpart --all --drives=sda
 # Use graphical install
 graphical
 # Use network installation
-url --url="__KS_URL__"
+#url --url="__KS_URL__"
+url --mirrorlist="https://mirrors.fedoraproject.org/mirrorlist?repo=fedora-$releasever&arch=$basearch"
 # Keyboard layouts
 keyboard --vckeymap=us --xlayouts='us'
 # System language

@@ -35,6 +35,7 @@ user --name=student --password=iamstudent --plaintext --gecos="Student"
 # Disk partitioning information
 part --asprimary --fstype ext4 --grow --label=root --ondisk=sda /
 
+#slim
 %packages
 @^minimal-environment
 xorg-x11-server-Xorg
@@ -44,7 +45,7 @@ mesa-dri-drivers
 xorg-x11-drv-qxl
 xorg-x11-drv-vesa
 spice-vdagent
-lightdm
+gdm
 xfce4-panel
 xfce4-session
 xfce4-settings
