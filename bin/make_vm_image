@@ -58,7 +58,7 @@ usage()
 {
 	local sde_version
 	local sde_name
-	sde_version=4.0.35
+	sde_version=4.0.36
 	sde_name=$(echo "$sde_version" | tr '.' '_')
 	local data_dir
 	data_dir=$(realpath "$cmd_dir/../data") || data_dir=
