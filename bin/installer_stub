@@ -1,5 +1,10 @@
 #! /usr/bin/env bash
 
+eecho()
+{
+	echo "$@" 1>&2
+}
+
 panic()
 {
 	echo "ERROR: $@" 1>&2
@@ -69,7 +74,10 @@ fi
 	source "$mvmdi_setup"
 
 	if [ -z "$MVMDI_SDE_VERSION" ]; then
-		panic "no SDE version specified"
+		#panic "no SDE version specified"
+		echo "MVMDI_SDE_VERSION empty or not set"
+		echo "skipping installation of SDE"
+		exit 0
 	fi
 	sde_version="$MVMDI_SDE_VERSION"
 	if [ -z "$MVMDI_SDE_INSTALL_DIR" ]; then

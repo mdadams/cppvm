@@ -38,6 +38,7 @@ user --name=student --password=iamstudent --plaintext --gecos="Student"
 # Disk partitioning information
 part --asprimary --fstype ext4 --grow --label=root --ondisk=sda /
 
+#lxdm?
 %packages
 @^minimal-environment
 xorg-x11-server-Xorg
@@ -47,7 +48,7 @@ mesa-dri-drivers
 xorg-x11-drv-qxl
 xorg-x11-drv-vesa
 spice-vdagent
-lightdm
+lightdm-autologin-greeter
 xfce4-panel
 xfce4-session
 xfce4-settings
@@ -90,6 +91,7 @@ a2ps
 texlive-pdfjam
 lsof
 net-tools
+openssl-devel
 
 %end
 
@@ -139,6 +141,11 @@ echo "SDE installation directory: $MVMDI_SDE_INSTALL_DIR"
 %post --interpreter /usr/bin/bash --log /root/install_sde.log
 ########## START OF installer_stub ##########
 #! /usr/bin/env bash
+
+eecho()
+{
+	echo "$@" 1>&2
+}
 
 panic()
 {
@@ -209,7 +216,10 @@ fi
 	source "$mvmdi_setup"
 
 	if [ -z "$MVMDI_SDE_VERSION" ]; then
-		panic "no SDE version specified"
+		#panic "no SDE version specified"
+		echo "MVMDI_SDE_VERSION empty or not set"
+		echo "skipping installation of SDE"
+		exit 0
 	fi
 	sde_version="$MVMDI_SDE_VERSION"
 	if [ -z "$MVMDI_SDE_INSTALL_DIR" ]; then

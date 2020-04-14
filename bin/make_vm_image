@@ -56,9 +56,12 @@ get_checksum()
 
 usage()
 {
+	local fedora_release
 	local sde_version
 	local sde_name
-	sde_version=4.0.36
+	fedora_release=31
+	#sde_version=4.0.36
+	sde_version=4.0.68
 	sde_name=$(echo "$sde_version" | tr '.' '_')
 	local data_dir
 	data_dir=$(realpath "$cmd_dir/../data") || data_dir=
@@ -68,6 +71,13 @@ usage()
 
 	$0 -d work_dir -n vm_name -k ks_file -r sde_version
 
+	Options
+	=======
+
+	-r \$sde_version
+	Set the version of the SDE to install.
+	If \$sde_version is an empty string, the installation of SDE is skipped.
+
 	Examples
 	========
 
@@ -75,7 +85,9 @@ usage()
 	$0 -n f29_xfce -R 29 -r 0.0.0 -k $data_dir/minimal_xfce.ks -d workdir
 	$0 -n f30_xfce -R 30 -r 0.0.0 -k $data_dir/minimal_xfce.ks -d workdir
 
-	$0 -n f29_sde_${sde_name} -R 29 -r ${sde_version} -k $data_dir/minimal_xfce_sde.ks -d workdir
+	$0 -n f${fedora_release} -R $fedora_release -r "" -k $data_dir/minimal_xfce_sde.ks -d workdir
+
+	$0 -n f${fedora_release}_sde_${sde_name} -R $fedora_release -r ${sde_version} -k $data_dir/minimal_xfce_sde.ks -d workdir
 	EOF
 	exit 2
 }
@@ -93,6 +105,7 @@ ks_file=
 work_dir=
 name=
 mirror=muug
+sde_version_valid=0
 sde_version=
 vmdi_dir=/var/lib/libvirt/images
 fedora_release=
@@ -117,7 +130,7 @@ while getopts D:d:n:k:t:m:xz:r:R:N opt; do
 	z)
 		vmdi_dir="$OPTARG";;
 	r)
-		sde_version="$OPTARG";;
+		sde_version="$OPTARG"; sde_version_valid=1;;
 	R)
 		fedora_release="$OPTARG";;
 	N)
@@ -137,7 +150,10 @@ if [ -z "$fedora_release" ]; then
 	usage "no Fedora release specified"
 fi
 
-if [ -z "$sde_version" ]; then
+#if [ -z "$sde_version" ]; then
+#	usage "no SDE version specified"
+#fi
+if [ "$sde_version_valid" -eq 0 ]; then
 	usage "no SDE version specified"
 fi
 if [ -z "$work_dir" ]; then
@@ -330,6 +346,7 @@ if [ ! -f "$qcow2_file" ]; then
 	echo "Making sparse QCOW2 image"
 	if [ "$sparsify" -ne 0 ]; then
 		TMPDIR="$tmp_dir" \
+		  LIBGUESTFS_BACKEND=direct \
 		  virt-sparsify "$orig_file" "$qcow2_file" || \
 		  panic "cannot sparsify VM image"
 	else
