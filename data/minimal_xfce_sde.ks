@@ -263,6 +263,12 @@ fi
 	export SDE_INSTALL_CLANG_STRIPPED=1
 	export SDE_CLANG_TRUNK_INSTALL=0
 
+	# Boost settings
+	# The following setting is a workaround for Boost not correctly finding
+	# the Python installation.  In the pathname for the include directory
+	# for Python, the "m" in "python3.7m" appears to be problematic.
+	export SDE_BOOST_CONFIG_DATA="using python : 3.7 : /usr/bin/python3 : /usr/include/python3.7m : /usr/lib ;"
+
 	git clone -q "$sde_repo_url" "$sde_git_dir" || \
 	  panic "cannot clone repository $sde_repo_url"
 
