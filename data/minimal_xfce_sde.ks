@@ -92,6 +92,8 @@ texlive-pdfjam
 lsof
 net-tools
 openssl-devel
+fftw-devel
+unzip
 
 %end
 
