@@ -22,7 +22,7 @@ poweroff
 
 # Network information
 network  --bootproto=dhcp --device=ens3 --ipv6=auto --activate
-network  --hostname=cpp
+network  --hostname=terra
 # Root password
 rootpw --plaintext iamroot
 # Run the Setup Agent on first boot
@@ -34,7 +34,8 @@ xconfig --startxonboot
 services --enabled="chronyd"
 # System timezone
 timezone America/Vancouver --isUtc
-user --name=student --password=iamstudent --plaintext --gecos="Student"
+# User account
+user --name=jdoe --password=iamjdoe --plaintext --gecos="John/Jane Doe"
 # Disk partitioning information
 part --asprimary --fstype ext4 --grow --label=root --ondisk=sda /
 
