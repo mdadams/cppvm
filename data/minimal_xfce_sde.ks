@@ -94,6 +94,9 @@ net-tools
 openssl-devel
 fftw-devel
 unzip
+perl-PerlIO-gzip
+perl-JSON
+vim-enhanced
 
 %end
 
