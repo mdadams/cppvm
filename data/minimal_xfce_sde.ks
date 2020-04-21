@@ -289,5 +289,13 @@ fi
 	  panic "cannot install SDE"
 
 } 2>&1 | tee -a "$log_file" > "$tty_dev"
+
+pipe_status=("${PIPESTATUS[@]}")
+if [ "${pipe_status[0]}" -ne 0 ]; then
+	panic "installation failed"
+fi
+if [ "${pipe_status[1]}" -ne 0 ]; then
+	panic "tee failed"
+fi
 ########## END OF installer_stub ##########
 %end
