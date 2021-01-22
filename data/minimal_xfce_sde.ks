@@ -40,6 +40,7 @@ user --name=jdoe --password=iamjdoe --plaintext --gecos="John/Jane Doe"
 part --asprimary --fstype ext4 --grow --label=root --ondisk=sda /
 
 #lxdm?
+#qt5-qtbase-devel
 %packages
 @^minimal-environment
 xorg-x11-server-Xorg
@@ -84,7 +85,6 @@ libtool
 libxslt
 docbook-style-xsl
 ncurses-devel
-qt5-devel
 bzip2
 xz
 evince

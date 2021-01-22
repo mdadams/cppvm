@@ -59,9 +59,11 @@ usage()
 	local fedora_release
 	local sde_version
 	local sde_name
-	fedora_release=31
+	#fedora_release=31
+	fedora_release=33
 	#sde_version=4.0.36
-	sde_version=4.0.70
+	#sde_version=4.0.70
+	sde_version=4.1.2
 	sde_name=$(echo "$sde_version" | tr '.' '_')
 	local data_dir
 	data_dir=$(realpath "$cmd_dir/../data") || data_dir=
@@ -81,18 +83,16 @@ usage()
 	Examples
 	========
 
-	$0 -n f28_xfce -R 28 -r 0.0.0 -k $data_dir/minimal_xfce.ks -d workdir
-	$0 -n f29_xfce -R 29 -r 0.0.0 -k $data_dir/minimal_xfce.ks -d workdir
-	$0 -n f30_xfce -R 30 -r 0.0.0 -k $data_dir/minimal_xfce.ks -d workdir
+	$0 -n f28_xfce -R 28 -r 0.0.0 -k $data_dir/minimal_xfce.ks -d f28_xfce
+	$0 -n f29_xfce -R 29 -r 0.0.0 -k $data_dir/minimal_xfce.ks -d f29_xfce
+	$0 -n f30_xfce -R 30 -r 0.0.0 -k $data_dir/minimal_xfce.ks -d f30_xfce
 
-	$0 -n f${fedora_release} -R $fedora_release -r "" -k $data_dir/minimal_xfce_sde.ks -d workdir
+	$0 -n f${fedora_release} -R $fedora_release -r "" -k $data_dir/minimal_xfce_sde.ks -d f${fedora_release}
 
-	$0 -n f${fedora_release}_sde_${sde_name} -R $fedora_release -r ${sde_version} -k $data_dir/minimal_xfce_sde.ks -d workdir
+	$0 -n f${fedora_release}_sde_${sde_name} -R $fedora_release -r ${sde_version} -k $data_dir/minimal_xfce_sde.ks -d f${fedora_release}_sde_${sde_name}
 	EOF
 	exit 2
 }
-#	$0 -n f29_sde_${sde_name} -N -R 29 -r ${sde_version} -k $data_dir/minimal_xfce_sde.ks -d workdir
-#	$0 -n f29_xfce -N -R 29 -r 0.0.0 -k $data_dir/minimal_xfce.ks -d workdir
 
 cmd_dir=$(dirname "$0") || panic "cannot get program directory"
 root_dir="$cmd_dir/.."
@@ -150,9 +150,6 @@ if [ -z "$fedora_release" ]; then
 	usage "no Fedora release specified"
 fi
 
-#if [ -z "$sde_version" ]; then
-#	usage "no SDE version specified"
-#fi
 if [ "$sde_version_valid" -eq 0 ]; then
 	usage "no SDE version specified"
 fi
@@ -297,7 +294,8 @@ if [ ! -f "$disk_file" ]; then
 		command+=(--location "$ks_url")
 	fi
 	command+=(--initrd-inject "$gen_ks_file")
-	command+=(--extra-args "ks=file:/$gen_ks_base")
+	#command+=(--extra-args "ks=file:/$gen_ks_base")
+	command+=(--extra-args "inst.ks=file:/$gen_ks_base")
 	command+=(--extra-args "MVMDI_SDE_VERSION=$sde_version")
 	command+=(--extra-args "MVMDI_SDE_INSTALL_DIR=/opt/sde")
 
