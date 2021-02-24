@@ -406,10 +406,12 @@ if [ "$cleanup" -ne 0 ]; then
 		virsh destroy "$name" || \
 		  panic "cannot shut off VM"
 	fi
-	virsh undefine "$name" || \
+	#virsh undefine "$name" || \
+	#  panic "virsh undefine failed"
+	virsh undefine --remove-all-storage "$name" || \
 	  panic "virsh undefine failed"
-	virsh vol-delete --pool default "$name.qcow2" || \
-	  panic "virsh vol-delete failed"
+	#virsh vol-delete --pool default "$name.qcow2" || \
+	#  panic "virsh vol-delete failed"
 fi
 
 exit
