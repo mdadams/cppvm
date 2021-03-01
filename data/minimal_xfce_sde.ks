@@ -1,44 +1,56 @@
 #version=DEVEL
-ignoredisk --only-use=sda
-# Partition clearing information
-clearpart --all --drives=sda
-#clearpart --none --initlabel
-# Use graphical install
-graphical
-# Use network installation
-#url --url="__KS_URL__"
-url --mirrorlist="https://mirrors.fedoraproject.org/mirrorlist?repo=fedora-$releasever&arch=$basearch"
-# Keyboard layouts
-keyboard --vckeymap=us --xlayouts='us'
-# System language
-lang en_US.UTF-8
-# Reboot
+
+# Specify the action to take upon completion of the install.
 #reboot
 #shutdown
 poweroff
 
+# Use graphical install
+graphical
+
+# Use network installation
+#url --url="__KS_URL__"
+url --mirrorlist="https://mirrors.fedoraproject.org/mirrorlist?repo=fedora-$releasever&arch=$basearch"
+
 # Uncomment the following line to allow the installation of updates.
 #repo --name=updates
+
+# Keyboard layouts
+keyboard --vckeymap=us --xlayouts='us'
+
+# System language
+lang en_US.UTF-8
 
 # Network information
 network  --bootproto=dhcp --device=ens3 --ipv6=auto --activate
 network  --hostname=terra
+
+# Disk partitioning information
+ignoredisk --only-use=sda
+clearpart --all --drives=sda
+#clearpart --none --initlabel
+part --asprimary --fstype ext4 --grow --label=root --ondisk=sda /
+
 # Root password
-rootpw --plaintext iamroot
+#rootpw --plaintext iamroot
+rootpw --lock
+# User account
+user --name=jdoe --groups=wheel --plaintext --password=iamjdoe --gecos="John/Jane Doe"
+
+# System timezone
+timezone America/Vancouver --utc
+
 # Run the Setup Agent on first boot
 firstboot --enable
+
 # Configure the X Window System
 #skipx
 xconfig --startxonboot
+
 # System services
 services --enabled="chronyd"
-# System timezone
-timezone America/Vancouver --isUtc
-# User account
-user --name=jdoe --password=iamjdoe --plaintext --gecos="John/Jane Doe"
-# Disk partitioning information
-part --asprimary --fstype ext4 --grow --label=root --ondisk=sda /
 
+# Packages
 #lxdm?
 #qt5-qtbase-devel
 %packages
@@ -126,7 +138,7 @@ done
 ################################################################################
 %end
 
-%post --interpreter /usr/bin/bash --nochroot
+%post --interpreter /usr/bin/bash --nochroot --erroronfail
 ################################################################################
 
 cp /tmp/mvmdi_setup.sh /mnt/sysimage/root/mvmdi_setup.sh
@@ -134,7 +146,7 @@ cp /tmp/mvmdi_setup.sh /mnt/sysimage/root/mvmdi_setup.sh
 ################################################################################
 %end
 
-%post --interpreter /usr/bin/bash --log /root/mvmdi.log
+%post --interpreter /usr/bin/bash --log /root/mvmdi.log --erroronfail
 ################################################################################
 
 source /root/mvmdi_setup.sh
@@ -144,7 +156,7 @@ echo "SDE installation directory: $MVMDI_SDE_INSTALL_DIR"
 ################################################################################
 %end
 
-%post --interpreter /usr/bin/bash --log /root/install_sde.log
+%post --interpreter /usr/bin/bash --log /root/install_sde.log --erroronfail
 ########## START OF installer_stub ##########
 #! /usr/bin/env bash
 
