@@ -53,6 +53,7 @@ services --enabled="chronyd"
 # Packages
 #lxdm?
 #qt5-qtbase-devel
+# Apparently, the flex package is sometimes needed for building GCC trunk.
 %packages
 @^minimal-environment
 xorg-x11-server-Xorg
@@ -111,6 +112,7 @@ perl-PerlIO-gzip
 perl-JSON
 vim-enhanced
 
+flex
 %end
 
 %addon com_redhat_kdump --disable --reserve-mb='128'
