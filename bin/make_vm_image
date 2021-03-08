@@ -111,8 +111,9 @@ sde_version=
 vmdi_dir=/var/lib/libvirt/images
 fedora_release=
 use_netinst_file=0
+install_gcc_trunk=0
 
-while getopts D:d:n:k:t:m:xz:r:R:N opt; do
+while getopts D:d:n:k:t:m:xz:r:R:NZ opt; do
 	case "$opt" in
 	d)
 		work_dir="$OPTARG";;
@@ -136,6 +137,8 @@ while getopts D:d:n:k:t:m:xz:r:R:N opt; do
 		fedora_release="$OPTARG";;
 	N)
 		use_netinst_file=1;;
+	Z)
+		install_gcc_trunk=1;;
 	\?)
 		usage
 		break;;
@@ -299,6 +302,9 @@ if [ ! -f "$disk_file" ]; then
 	command+=(--extra-args "inst.ks=file:/$gen_ks_base")
 	command+=(--extra-args "MVMDI_SDE_VERSION=$sde_version")
 	command+=(--extra-args "MVMDI_SDE_INSTALL_DIR=/opt/sde")
+	if [ "$install_gcc_trunk" -ne 0 ]; then
+		command+=(--extra-args "MVMDI_SDE_GCC_TRUNK_INSTALL=1")
+	fi
 
 	command+=(--events on_poweroff=preserve)
 
