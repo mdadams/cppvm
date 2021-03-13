@@ -59,13 +59,9 @@ usage()
 	local fedora_release
 	local sde_version
 	local sde_name
-	#fedora_release=31
 	fedora_release=33
-	#sde_version=4.0.36
-	#sde_version=4.0.70
-	#sde_version=4.1.5
-	#sde_version=4.2.0
-	sde_version=4.2.4
+	#sde_version=4.2.4
+	sde_version=4.2.6
 	sde_name=$(echo "$sde_version" | tr '.' '_')
 	local data_dir
 	data_dir=$(realpath "$cmd_dir/../data") || data_dir=
