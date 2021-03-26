@@ -180,16 +180,19 @@ tmp_dir=$(realpath "$tmp_dir") || panic "cannot get realpath"
 
 case "$mirror" in
 muug)
-	mirror_base_url="https://muug.ca/mirror/fedora/linux"
+	mirror_base_url="https://muug.ca/mirror/fedora/linux/releases"
 	;;
 kernel)
-	mirror_base_url="https://ewr.edge.kernel.org/fedora-buffet/fedora/linux"
+	mirror_base_url="https://ewr.edge.kernel.org/fedora-buffet/fedora/linux/releases"
 	;;
 archives)
-	mirror_base_url="https://archives.fedoraproject.org/pub/archive/fedora/linux"
+	mirror_base_url="https://archives.fedoraproject.org/pub/archive/fedora/linux/releases"
+	;;
+development)
+	mirror_base_url="https://muug.ca/mirror/fedora/linux/development"
 	;;
 *)
-	mirror_base_url="https://download.fedoraproject.org/pub/fedora/linux"
+	mirror_base_url="https://download.fedoraproject.org/pub/fedora/linux/releases"
 	;;
 esac
 
@@ -204,10 +207,10 @@ if [ "$use_netinst_file" -ne 0 ]; then
 	*)
 		panic;;
 	esac
-	netinst_url="$mirror_base_url/releases/$fedora_release/Everything/x86_64/iso/Fedora-Everything-netinst-x86_64-$fedora_release-$netinst_version.iso"
+	netinst_url="$mirror_base_url/$fedora_release/Everything/x86_64/iso/Fedora-Everything-netinst-x86_64-$fedora_release-$netinst_version.iso"
 fi
 
-ks_url="$mirror_base_url/releases/$fedora_release/Everything/x86_64/os/"
+ks_url="$mirror_base_url/$fedora_release/Everything/x86_64/os/"
 
 cat <<- EOF
 work directory: $work_dir
@@ -222,6 +225,12 @@ netinstall file: $netinst_file
 EOF
 
 #exit
+
+virsh dumpxml "$name" > /dev/null 2> /dev/null
+status=$?
+if [ "$status" -eq 0 ]; then
+	panic "name $name already in use"
+fi
 
 download_dir="$work_dir/downloads"
 image_dir="$work_dir/images"
