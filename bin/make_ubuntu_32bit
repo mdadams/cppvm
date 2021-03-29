@@ -1,0 +1,24 @@
+#! /usr/bin/env bash
+
+program_dir=$(dirname "$0")
+data_dir="$program_dir/../data"
+
+if [ $# -ne 1 ]; then
+	exit 1
+fi
+name="$1"
+
+command=(virt-install)
+command+=(--name "$name")
+command+=(--ram 8192)
+command+=(--disk "path=/var/lib/libvirt/images/$name.img,size=20")
+command+=(--vcpus 4 )
+command+=(--virt-type kvm)
+command+=(--os-type linux)
+command+=(--os-variant generic)
+command+=(--graphics spice)
+command+=(--location 'http://archive.ubuntu.com/ubuntu/dists/bionic/main/installer-i386/')
+command+=(--initrd-inject "$data_dir/ubuntu/ks.cfg")
+command+=(--extra-args "ks=file:/ks.cfg")
+
+"${command[@]}"
