@@ -108,6 +108,9 @@ fi
 	export SDE_VIM_INSTALL=0
 	export SDE_CGAL_INSTALL=1
 	export SDE_HUB_INSTALL=0
+	export SDE_GHI_INSTALL=0
+	export SDE_GH_INSTALL=0
+	export SDE_GCC_GO_INSTALL=0
 
 	# GCC settings
 	export SDE_INSTALL_GCC_ENABLE_LANGUAGES="c,c++,fortran"
