@@ -86,7 +86,7 @@ usage()
 	Make a VM disk image that does not include the SDE:
 	$0 -n f${fedora_release} -R $fedora_release -r "" -k $data_dir/fedora/minimal_xfce_sde.ks -d f${fedora_release}
 
-	Make a VM disk image that include a GCC trunk build:
+	Make a VM disk image that includes a GCC trunk build:
 	$0 -n f${fedora_release}_sde_${sde_name}_x -R $fedora_release -r ${sde_version} -Z -k $data_dir/fedora/minimal_xfce_sde.ks -d f${fedora_release}_sde_${sde_name}_x
 
 	Make a VM disk image that includes the SDE:
