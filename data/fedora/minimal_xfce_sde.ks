@@ -111,8 +111,8 @@ unzip
 perl-PerlIO-gzip
 perl-JSON
 vim-enhanced
-
 flex
+seahorse
 %end
 
 %addon com_redhat_kdump --disable --reserve-mb='128'
