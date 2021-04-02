@@ -112,6 +112,7 @@ perl-PerlIO-gzip
 perl-JSON
 vim-enhanced
 flex
+libsecret
 seahorse
 %end
 
