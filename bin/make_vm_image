@@ -59,8 +59,9 @@ usage()
 	local fedora_release
 	local sde_version
 	local sde_name
+	next_fedora_release=34
 	fedora_release=33
-	sde_version=4.2.15
+	sde_version=4.2.17
 	sde_name=$(echo "$sde_version" | tr '.' '_')
 	local data_dir
 	data_dir=$(realpath "$cmd_dir/../data") || data_dir=
@@ -88,6 +89,10 @@ usage()
 
 	Make a VM disk image that includes a GCC trunk build:
 	$0 -n f${fedora_release}_sde_${sde_name}_x -R $fedora_release -r ${sde_version} -Z -k $data_dir/fedora/minimal_xfce_sde.ks -d f${fedora_release}_sde_${sde_name}_x
+
+	Make a VM disk image based on a development version of Fedora that
+	includes the SDE (assuming the development version is $next_fedora_release):
+	$0 -n f${next_fedora_release}beta_sde_${sde_name} -R $next_fedora_release -r ${sde_version} -m development -k $data_dir/fedora/minimal_xfce_sde.ks -d f${next_fedora_release}beta_sde_${sde_name}
 
 	Make a VM disk image that includes the SDE:
 	$0 -n f${fedora_release}_sde_${sde_name} -R $fedora_release -r ${sde_version} -k $data_dir/fedora/minimal_xfce_sde.ks -d f${fedora_release}_sde_${sde_name}
