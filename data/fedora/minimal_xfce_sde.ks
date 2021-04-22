@@ -91,6 +91,8 @@ gmp-devel
 mpfr-devel
 freeglut-devel
 glew-devel
+glfw-devel
+glm-devel
 autoconf
 automake
 libcap-devel
@@ -110,10 +112,13 @@ fftw-devel
 unzip
 perl-PerlIO-gzip
 perl-JSON
+perl-JSON-PP
 vim-enhanced
 flex
 libsecret
 seahorse
+gperftools
+papi-devel
 %end
 
 %addon com_redhat_kdump --disable --reserve-mb='128'
