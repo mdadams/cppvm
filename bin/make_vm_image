@@ -247,7 +247,7 @@ netinstall file: $netinst_file
 VM memory: $vm_memory
 EOF
 
-exit
+#exit
 
 ################################################################################
 # Check to ensure that VM does not already exist.
