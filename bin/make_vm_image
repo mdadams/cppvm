@@ -1,4 +1,9 @@
 #! /usr/bin/env bash
+# Michael Adams (mdadams@ece.uvic.ca)
+
+################################################################################
+#
+################################################################################
 
 panic()
 {
@@ -54,6 +59,10 @@ get_checksum()
 	sha512sum - < "$file" | awk '{print $1;}' -
 }
 
+################################################################################
+#
+################################################################################
+
 usage()
 {
 	local fedora_release
@@ -100,6 +109,10 @@ usage()
 	exit 2
 }
 
+################################################################################
+#
+################################################################################
+
 cmd_dir=$(dirname "$0") || panic "cannot get program directory"
 root_dir="$cmd_dir/.."
 data_dir="$root_dir/data"
@@ -117,6 +130,7 @@ vmdi_dir=/var/lib/libvirt/images
 fedora_release=
 use_netinst_file=0
 install_gcc_trunk=0
+vm_memory=$((24 * 1024))
 
 while getopts D:d:n:k:t:m:xz:r:R:NZ opt; do
 	case "$opt" in
@@ -182,6 +196,10 @@ if [ -z "$tmp_dir" ]; then
 fi
 tmp_dir=$(realpath "$tmp_dir") || panic "cannot get realpath"
 
+################################################################################
+# Perform initialization.
+################################################################################
+
 case "$mirror" in
 muug)
 	mirror_base_url="https://muug.ca/mirror/fedora/linux/releases"
@@ -226,15 +244,24 @@ mirror: $mirror
 mirror base URL: $mirror_base_url
 kickstart URL: $ks_url
 netinstall file: $netinst_file
+VM memory: $vm_memory
 EOF
 
-#exit
+exit
+
+################################################################################
+# Check to ensure that VM does not already exist.
+################################################################################
 
 virsh dumpxml "$name" > /dev/null 2> /dev/null
 status=$?
 if [ "$status" -eq 0 ]; then
 	panic "name $name already in use"
 fi
+
+################################################################################
+#
+################################################################################
 
 download_dir="$work_dir/downloads"
 image_dir="$work_dir/images"
@@ -279,12 +306,20 @@ cp "$ks_file" "$gen_ks_file" || panic "cannot copy kickstart file"
 sed -i "s|__KS_URL__|$ks_url|g" "$gen_ks_file" || \
   panic "cannot update temporary kickstart file"
 
+################################################################################
+#
+################################################################################
+
 if [ "$use_netinst_file" -ne 0 ]; then
 	if [ ! -f "$netinst_file" ]; then
 		wget -O "$netinst_file" "$netinst_url" || \
 		  panic "cannot download netinst"
 	fi
 fi
+
+################################################################################
+# Create VM.
+################################################################################
 
 if [ ! -f "$disk_file" ]; then
 	for file in "$orig_file" "$orig_csum_file"; do
@@ -302,7 +337,7 @@ if [ ! -f "$disk_file" ]; then
 	# The following causes dracut initqueue timeout.
 	#command+=(--os-variant "fedora$fedora_release")
 
-	command+=(--memory 16384)
+	command+=(--memory "$vm_memory")
 	command+=(--vcpus 4)
 	command+=(--disk path=$disk_file,format=qcow2,size=16)
 	command+=(--network bridge=virbr0)
@@ -335,6 +370,10 @@ if [ ! -f "$disk_file" ]; then
 	panic "disk image missing"
 fi
 
+################################################################################
+# Remove any old image files (if appropriate).
+################################################################################
+
 clean=1
 if [ "$clean" -ne 0 ]; then
 	for file in "$orig_file" "$qcow2_file" "$gzip_qcow2_file" "$vdi_file" \
@@ -345,6 +384,10 @@ if [ "$clean" -ne 0 ]; then
 	done
 	ls -al "$image_dir"
 fi
+
+################################################################################
+# Copy the VM disk image.
+################################################################################
 
 if [ ! -f "$orig_file" ]; then
 	echo "copying created disk image"
@@ -364,6 +407,10 @@ echo "WAIT FINISHED: $(get_time)"
 
 ls -l "$image_dir"
 
+################################################################################
+# Sparsify the VM disk image.
+################################################################################
+
 if [ ! -f "$qcow2_file" ]; then
 	echo "Making sparse QCOW2 image"
 	if [ "$sparsify" -ne 0 ]; then
@@ -377,6 +424,10 @@ if [ ! -f "$qcow2_file" ]; then
 	fi
 	ls -l "$qcow2_file"
 fi
+
+################################################################################
+# Convert the VM disk image for various other formats.
+################################################################################
 
 if [ ! -f "$gzip_vdi_file" ]; then
 	echo "Converting from QCOW2 to VDI"
@@ -407,6 +458,10 @@ if [ ! -f "$gzip_qcow2_file" ]; then
 	ls -l "$gzip_qcow2_file"
 fi
 
+################################################################################
+#
+################################################################################
+
 echo "List files"
 ls -l "$image_dir"
 
@@ -423,6 +478,10 @@ done
 
 echo "FINISHED: $(get_time)"
 
+################################################################################
+# Perform cleanup.
+################################################################################
+
 cleanup=1
 if [ "$cleanup" -ne 0 ]; then
 	state=$(vm_get_state "$name") || panic "cannot get VM state"
@@ -438,4 +497,4 @@ if [ "$cleanup" -ne 0 ]; then
 	#  panic "virsh vol-delete failed"
 fi
 
-exit
+#exit
