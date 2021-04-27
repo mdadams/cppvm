@@ -70,7 +70,7 @@ usage()
 	local sde_name
 	next_fedora_release=34
 	fedora_release=33
-	sde_version=4.4.0
+	sde_version=4.4.1
 	sde_name=$(echo "$sde_version" | tr '.' '_')
 	local data_dir
 	data_dir=$(realpath "$cmd_dir/../data") || data_dir=
