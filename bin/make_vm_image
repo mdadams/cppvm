@@ -68,8 +68,8 @@ usage()
 	local fedora_release
 	local sde_version
 	local sde_name
-	next_fedora_release=34
-	fedora_release=33
+	fedora_release=34
+	next_fedora_release=$((fedora_release + 1))
 	sde_version=4.4.1
 	sde_name=$(echo "$sde_version" | tr '.' '_')
 	local data_dir
@@ -90,6 +90,10 @@ usage()
 	Examples
 	========
 
+	Make a VM disk image that does not include the SDE without using
+	a Kickstart file:
+	$0 -n f${fedora_release} -R $fedora_release -r "" -d f${fedora_release}
+
 	Make a VM disk image that is based on an archived version of Fedora:
 	$0 -n f31 -m archives -R 31 -r "" -k $data_dir/fedora/minimal_xfce_sde.ks -d f31
 
@@ -105,6 +109,9 @@ usage()
 
 	Make a VM disk image that includes the SDE:
 	$0 -n f${fedora_release}_sde_${sde_name} -R $fedora_release -r ${sde_version} -k $data_dir/fedora/minimal_xfce_sde.ks -d f${fedora_release}_sde_${sde_name}
+
+	Make a VM disk image that uses Btrfs and includes the SDE:
+	$0 -n f${fedora_release}_sde_${sde_name} -R $fedora_release -r ${sde_version} -k $data_dir/fedora/minimal_xfce_sde_btrfs.ks -d f${fedora_release}_sde_${sde_name}
 	EOF
 	exit 2
 }
@@ -131,6 +138,7 @@ fedora_release=
 use_netinst_file=0
 install_gcc_trunk=0
 vm_memory=$((24 * 1024))
+disk_size=16
 
 while getopts D:d:n:k:t:m:xz:r:R:NZ opt; do
 	case "$opt" in
@@ -183,12 +191,16 @@ work_dir=$(realpath "$work_dir") || panic "cannot get realpath"
 if [ -z "$name" ]; then
 	usage "no VM name specified"
 fi
-if [ -z "$ks_file" ]; then
-	usage "no kickstart file specified"
+if [ -n "$ks_file" ]; then
+	use_ks=1
+else
+	use_ks=0
 fi
 
-if [ ! -f "$ks_file" ]; then
-	panic "kickstart file is missing"
+if [ "$use_ks" -ne 0 ]; then
+	if [ ! -f "$ks_file" ]; then
+		panic "kickstart file is missing"
+	fi
 fi
 
 if [ -z "$tmp_dir" ]; then
@@ -265,9 +277,11 @@ fi
 
 download_dir="$work_dir/downloads"
 image_dir="$work_dir/images"
-gen_ks_file="$work_dir/kickstart.ks"
-gen_ks_base=$(basename "$gen_ks_file") || \
-  panic "cannot get base name"
+if [ "$use_ks" -ne 0 ]; then
+	gen_ks_file="$work_dir/kickstart.ks"
+	gen_ks_base=$(basename "$gen_ks_file") || \
+	  panic "cannot get base name"
+fi
 
 if [ "$use_netinst_file" -ne 0 ]; then
 	netinst_base=$(basename "$netinst_url") || panic "cannot get base name"
@@ -298,13 +312,15 @@ ls -l "$work_dir"
 ls -l "$download_dir"
 ls -l "$image_dir"
 
-echo "Preparing kickstart file"
-if [ -f "$gen_ks_file" ]; then
-	rm -f "$gen_ks_file" || panic "cannot remove temporary kickstart file"
+if [ "$use_ks" -ne 0 ]; then
+	echo "Preparing kickstart file"
+	if [ -f "$gen_ks_file" ]; then
+		rm -f "$gen_ks_file" || panic "cannot remove temporary kickstart file"
+	fi
+	cp "$ks_file" "$gen_ks_file" || panic "cannot copy kickstart file"
+	sed -i "s|__KS_URL__|$ks_url|g" "$gen_ks_file" || \
+	  panic "cannot update temporary kickstart file"
 fi
-cp "$ks_file" "$gen_ks_file" || panic "cannot copy kickstart file"
-sed -i "s|__KS_URL__|$ks_url|g" "$gen_ks_file" || \
-  panic "cannot update temporary kickstart file"
 
 ################################################################################
 #
@@ -339,7 +355,7 @@ if [ ! -f "$disk_file" ]; then
 
 	command+=(--memory "$vm_memory")
 	command+=(--vcpus 4)
-	command+=(--disk path=$disk_file,format=qcow2,size=16)
+	command+=(--disk path=$disk_file,format=qcow2,size="$disk_size")
 	command+=(--network bridge=virbr0)
 	command+=(--graphics spice)
 
@@ -349,9 +365,11 @@ if [ ! -f "$disk_file" ]; then
 	else
 		command+=(--location "$ks_url")
 	fi
-	command+=(--initrd-inject "$gen_ks_file")
-	#command+=(--extra-args "ks=file:/$gen_ks_base")
-	command+=(--extra-args "inst.ks=file:/$gen_ks_base")
+	if [ "$use_ks" -ne 0 ]; then
+		command+=(--initrd-inject "$gen_ks_file")
+		#command+=(--extra-args "ks=file:/$gen_ks_base")
+		command+=(--extra-args "inst.ks=file:/$gen_ks_base")
+	fi
 	command+=(--extra-args "MVMDI_SDE_VERSION=$sde_version")
 	command+=(--extra-args "MVMDI_SDE_INSTALL_DIR=/opt/sde")
 	if [ "$install_gcc_trunk" -ne 0 ]; then

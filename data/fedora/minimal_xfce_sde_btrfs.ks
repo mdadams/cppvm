@@ -25,11 +25,21 @@ lang en_US.UTF-8
 network  --bootproto=dhcp --device=ens3 --ipv6=auto --activate
 network  --hostname=terra
 
+########################################
 # Disk partitioning information
+########################################
 ignoredisk --only-use=sda
+# System bootloader configuration
+bootloader --location=mbr --boot-drive=sda
+# Partition clearing information
 clearpart --all --drives=sda
 #clearpart --none --initlabel
-part --asprimary --fstype ext4 --grow --label=root --ondisk=sda /
+# Disk partitioning information
+part btrfs.01 --fstype="btrfs" --ondisk=sda --grow
+btrfs none --label=fedora_terra btrfs.01
+btrfs /home --subvol --name=home LABEL=fedora_terra
+btrfs / --subvol --name=root LABEL=fedora_terra
+btrfs /boot --subvol --name=boot LABEL=fedora_terra
 
 # Root password
 #rootpw --plaintext iamroot
