@@ -84,6 +84,7 @@ xfce4-terminal
 xfce4-appfinder
 xfce4-pulseaudio-plugin
 thunar-volman
+network-manager-applet
 udisks2
 gvfs
 firefox
