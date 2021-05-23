@@ -119,6 +119,8 @@ libsecret
 seahorse
 gperftools
 papi-devel
+tree
+google-noto-emoji-color-fonts
 %end
 
 %addon com_redhat_kdump --disable --reserve-mb='128'
