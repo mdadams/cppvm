@@ -132,6 +132,7 @@ gperftools
 papi-devel
 tree
 google-noto-emoji-color-fonts
+valgrind
 %end
 
 %addon com_redhat_kdump --disable --reserve-mb='128'

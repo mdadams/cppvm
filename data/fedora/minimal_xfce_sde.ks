@@ -74,6 +74,7 @@ xfce4-terminal
 xfce4-appfinder
 xfce4-pulseaudio-plugin
 thunar-volman
+network-manager-applet
 udisks2
 gvfs
 firefox
@@ -121,6 +122,7 @@ gperftools
 papi-devel
 tree
 google-noto-emoji-color-fonts
+valgrind
 %end
 
 %addon com_redhat_kdump --disable --reserve-mb='128'
