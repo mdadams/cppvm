@@ -37,9 +37,9 @@ clearpart --all --drives=sda
 # Disk partitioning information
 part btrfs.01 --fstype="btrfs" --ondisk=sda --grow
 btrfs none --label=fedora_terra btrfs.01
-btrfs /home --subvol --name=home LABEL=fedora_terra
-btrfs / --subvol --name=root LABEL=fedora_terra
-btrfs /boot --subvol --name=boot LABEL=fedora_terra
+btrfs /home --subvol --name=@home LABEL=fedora_terra
+btrfs / --subvol --name=@ LABEL=fedora_terra
+btrfs /boot --subvol --name=@boot LABEL=fedora_terra
 
 # Root password
 #rootpw --plaintext iamroot

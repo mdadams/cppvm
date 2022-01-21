@@ -68,9 +68,9 @@ usage()
 	local fedora_release
 	local sde_version
 	local sde_name
-	fedora_release=34
+	fedora_release=35
 	next_fedora_release=$((fedora_release + 1))
-	sde_version=4.4.1
+	sde_version=4.7.0
 	sde_name=$(echo "$sde_version" | tr '.' '_')
 	local data_dir
 	data_dir=$(realpath "$cmd_dir/../data") || data_dir=
@@ -87,8 +87,8 @@ usage()
 	Set the version of the SDE to install.
 	If \$sde_version is an empty string, the installation of SDE is skipped.
 
-	Examples
-	========
+	Examples Without SDE
+	====================
 
 	Make a VM disk image that does not include the SDE without using
 	a Kickstart file:
@@ -98,7 +98,10 @@ usage()
 	$0 -n f31 -m archives -R 31 -r "" -k $data_dir/fedora/minimal_xfce_sde.ks -d f31
 
 	Make a VM disk image that does not include the SDE:
-	$0 -n f${fedora_release} -R $fedora_release -r "" -k $data_dir/fedora/minimal_xfce_sde.ks -d f${fedora_release}
+	$0 -n f${fedora_release} -R $fedora_release -r "" -k $data_dir/fedora/minimal_xfce_sde_btrfs.ks -d f${fedora_release}
+
+	Examples With SDE
+	=================
 
 	Make a VM disk image that includes a GCC trunk build:
 	$0 -n f${fedora_release}_sde_${sde_name}_x -R $fedora_release -r ${sde_version} -Z -k $data_dir/fedora/minimal_xfce_sde.ks -d f${fedora_release}_sde_${sde_name}_x
@@ -107,14 +110,14 @@ usage()
 	includes the SDE (assuming the development version is $next_fedora_release):
 	$0 -n f${next_fedora_release}beta_sde_${sde_name} -R $next_fedora_release -r ${sde_version} -m development -k $data_dir/fedora/minimal_xfce_sde.ks -d f${next_fedora_release}beta_sde_${sde_name}
 
-	Make a VM disk image that includes the SDE:
-	$0 -n f${fedora_release}_sde_${sde_name} -R $fedora_release -r ${sde_version} -k $data_dir/fedora/minimal_xfce_sde.ks -d f${fedora_release}_sde_${sde_name}
-
 	Make a VM disk image that uses Btrfs and includes the SDE:
 	$0 -n f${fedora_release}_sde_${sde_name} -R $fedora_release -r ${sde_version} -k $data_dir/fedora/minimal_xfce_sde_btrfs.ks -d f${fedora_release}_sde_${sde_name}
 	EOF
 	exit 2
 }
+
+#	Make a VM disk image that includes the SDE:
+#	$0 -n f${fedora_release}_sde_${sde_name} -R $fedora_release -r ${sde_version} -k $data_dir/fedora/minimal_xfce_sde.ks -d f${fedora_release}_sde_${sde_name}
 
 ################################################################################
 #
