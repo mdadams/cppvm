@@ -296,12 +296,14 @@ fi
 	export SDE_GCC_USE_OLD_ABI=0
 	export SDE_INSTALL_GCC_STRIPPED=1
 	export SDE_GCC_TRUNK_INSTALL=${MVMDI_SDE_GCC_TRUNK_INSTALL:-0}
+	export SDE_INSTALL_GCC_DEFAULT_PIE=0
 
 	# LLVM settings
 	export SDE_LLVM_INSTALL_LLDB=0
 	export SDE_LLVM_INSTALL_TEST_SUITE=0
 	export SDE_INSTALL_CLANG_STRIPPED=1
 	export SDE_CLANG_TRUNK_INSTALL=${MVMDI_SDE_CLANG_TRUNK_INSTALL:-0}
+	export SDE_INSTALL_CLANG_DEFAULT_PIE=0
 
 	# Boost settings
 	# The following setting is a workaround for Boost not correctly finding
