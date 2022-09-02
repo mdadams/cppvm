@@ -133,6 +133,7 @@ papi-devel
 tree
 google-noto-emoji-color-fonts
 valgrind
+libedit-devel
 %end
 
 %addon com_redhat_kdump --disable --reserve-mb='128'
