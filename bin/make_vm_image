@@ -68,7 +68,7 @@ usage()
 	local fedora_release
 	local sde_version
 	local sde_name
-	fedora_release=36
+	fedora_release=37
 	next_fedora_release=$((fedora_release + 1))
 	sde_version=5.0.0
 	sde_name=$(echo "$sde_version" | tr '.' '_')

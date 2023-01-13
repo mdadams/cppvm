@@ -22,8 +22,8 @@ keyboard --vckeymap=us --xlayouts='us'
 lang en_US.UTF-8
 
 # Network information
-network  --bootproto=dhcp --device=ens3 --ipv6=auto --activate
-network  --hostname=terra
+network --bootproto=dhcp --device=ens3 --ipv6=auto --activate
+network --hostname=terra
 
 ########################################
 # Disk partitioning information
@@ -35,11 +35,12 @@ bootloader --location=mbr --boot-drive=sda
 clearpart --all --drives=sda
 #clearpart --none --initlabel
 # Disk partitioning information
+part biosboot --fstype="biosboot" --ondisk=sda --size=1
 part btrfs.01 --fstype="btrfs" --ondisk=sda --grow
 btrfs none --label=fedora_terra btrfs.01
-btrfs /home --subvol --name=@home LABEL=fedora_terra
-btrfs / --subvol --name=@ LABEL=fedora_terra
 btrfs /boot --subvol --name=@boot LABEL=fedora_terra
+btrfs / --subvol --name=@ LABEL=fedora_terra
+btrfs /home --subvol --name=@home LABEL=fedora_terra
 
 # Root password
 #rootpw --plaintext iamroot
