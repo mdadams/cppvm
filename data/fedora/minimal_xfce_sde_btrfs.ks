@@ -294,20 +294,13 @@ fi
 	export SDE_GCC_GO_INSTALL=0
 
 	# GCC settings
-	#export SDE_INSTALL_GCC_ENABLE_LANGUAGES="c,c++,fortran"
-	#export SDE_GCC_USE_OLD_ABI=0
-	#export SDE_INSTALL_GCC_STRIPPED=1
-	#export SDE_INSTALL_GCC_DEFAULT_PIE=0
-	export SDE_GCC_TRUNK_INSTALL=${MVMDI_SDE_GCC_TRUNK_INSTALL:-0}
-	export SDE_INSTALL_GCC_OPTIONS="--enable-languages c,c++,fortran --no-default-pie --no-old-abi --strip"
+	# NOTE: add rust support in the future
+	export SDE_GCC_INSTALL_OPTIONS="--enable-languages c,c++,fortran --no-default-pie --no-old-abi --strip"
+	export SDE_ALT_GCC_INSTALL=${MVMDI_SDE_ALT_GCC_INSTALL:-0}
 
 	# LLVM settings
-	#export SDE_LLVM_INSTALL_LLDB=0
-	#export SDE_LLVM_INSTALL_TEST_SUITE=0
-	#export SDE_INSTALL_CLANG_STRIPPED=1
-	#export SDE_INSTALL_CLANG_DEFAULT_PIE=0
-	export SDE_CLANG_TRUNK_INSTALL=${MVMDI_SDE_CLANG_TRUNK_INSTALL:-0}
-	export SDE_INSTALL_CLANG_OPTIONS="--no-enable-lldb --no-enable-test-suite --no-default-pie --strip"
+	export SDE_CLANG_INSTALL_OPTIONS="--no-enable-lldb --no-enable-test-suite --no-default-pie --strip"
+	export SDE_ALT_CLANG_INSTALL=${MVMDI_SDE_ALT_CLANG_INSTALL:-0}
 
 	# Boost settings
 	# The following setting is a workaround for Boost not correctly finding

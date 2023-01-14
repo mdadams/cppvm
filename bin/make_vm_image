@@ -379,10 +379,10 @@ if [ ! -f "$disk_file" ]; then
 	command+=(--extra-args "MVMDI_SDE_VERSION=$sde_version")
 	command+=(--extra-args "MVMDI_SDE_INSTALL_DIR=/opt/sde")
 	if [ "$install_gcc_trunk" -ne 0 ]; then
-		command+=(--extra-args "MVMDI_SDE_GCC_TRUNK_INSTALL=1")
+		command+=(--extra-args "MVMDI_SDE_ALT_GCC_INSTALL=1")
 	fi
 	if [ "$install_clang_trunk" -ne 0 ]; then
-		command+=(--extra-args "MVMDI_SDE_CLANG_TRUNK_INSTALL=1")
+		command+=(--extra-args "MVMDI_SDE_ALT_CLANG_INSTALL=1")
 	fi
 
 	command+=(--events on_poweroff=preserve)
