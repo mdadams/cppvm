@@ -295,11 +295,11 @@ fi
 
 	# GCC settings
 	# NOTE: add rust support in the future
-	export SDE_GCC_INSTALL_OPTIONS="--enable-languages c,c++,fortran --no-default-pie --no-old-abi --strip"
+	export SDE_GCC_INSTALL_OPTIONS="--num-jobs 8 --enable-languages c,c++,fortran --no-default-pie --no-old-abi --strip"
 	export SDE_ALT_GCC_INSTALL=${MVMDI_SDE_ALT_GCC_INSTALL:-0}
 
 	# LLVM settings
-	export SDE_CLANG_INSTALL_OPTIONS="--no-enable-lldb --no-enable-test-suite --no-default-pie --strip"
+	export SDE_CLANG_INSTALL_OPTIONS="--num-jobs 8 --num-parallel-compile-jobs 7 --num-parallel-link-jobs 1 --no-enable-lldb --no-enable-test-suite --no-default-pie --strip"
 	export SDE_ALT_CLANG_INSTALL=${MVMDI_SDE_ALT_CLANG_INSTALL:-0}
 
 	# Boost settings

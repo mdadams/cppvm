@@ -70,7 +70,7 @@ usage()
 	local sde_name
 	fedora_release=37
 	next_fedora_release=$((fedora_release + 1))
-	sde_version=6.0.0
+	sde_version=6.0.2
 	sde_name=$(echo "$sde_version" | tr '.' '_')
 	local data_dir
 	data_dir=$(realpath "$cmd_dir/../data") || data_dir=
@@ -142,9 +142,9 @@ use_netinst_file=0
 install_gcc_trunk=0
 install_clang_trunk=0
 vm_memory=$((24 * 1024))
-disk_size=16
+disk_size=20
 
-while getopts D:d:n:k:t:m:xz:r:R:NZY opt; do
+while getopts D:d:n:k:t:m:xz:r:R:NZYs: opt; do
 	case "$opt" in
 	d)
 		work_dir="$OPTARG";;
@@ -172,6 +172,8 @@ while getopts D:d:n:k:t:m:xz:r:R:NZY opt; do
 		install_clang_trunk=1;;
 	Z)
 		install_gcc_trunk=1;;
+	s)
+		disk_size="$OPTARG";;
 	\?)
 		usage
 		break;;
@@ -360,7 +362,7 @@ if [ ! -f "$disk_file" ]; then
 	#command+=(--os-variant "fedora$fedora_release")
 
 	command+=(--memory "$vm_memory")
-	command+=(--vcpus 4)
+	command+=(--vcpus 8)
 	command+=(--disk path=$disk_file,format=qcow2,size="$disk_size")
 	command+=(--network bridge=virbr0)
 	command+=(--graphics spice)
