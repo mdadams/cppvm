@@ -70,7 +70,7 @@ usage()
 	local sde_name
 	fedora_release=37
 	next_fedora_release=$((fedora_release + 1))
-	sde_version=6.1.3
+	sde_version=6.1.8
 	sde_name=$(echo "$sde_version" | tr '.' '_')
 	local data_dir
 	data_dir=$(realpath "$cmd_dir/../data") || data_dir=
@@ -103,14 +103,14 @@ usage()
 	Examples With SDE
 	=================
 
-	Make a VM disk image that includes a GCC trunk build:
-	$0 -n f${fedora_release}_sde_${sde_name}_x -R $fedora_release -r ${sde_version} -Z -k $data_dir/fedora/minimal_xfce_sde.ks -d f${fedora_release}_sde_${sde_name}_x
-
 	Make a VM disk image based on a development version of Fedora that
 	includes the SDE (assuming the development version is $next_fedora_release):
 	$0 -n f${next_fedora_release}beta_sde_${sde_name} -R $next_fedora_release -r ${sde_version} -m development -k $data_dir/fedora/minimal_xfce_sde.ks -d f${next_fedora_release}beta_sde_${sde_name}
 
-	(*) Make a VM disk image that uses Btrfs and includes the SDE:
+	[SENG475] Make a VM disk image that includes a GCC trunk build:
+	$0 -n f${fedora_release}_sde_${sde_name} -R $fedora_release -r ${sde_version} -k $data_dir/fedora/minimal_xfce_sde_btrfs.ks -d f${fedora_release}_sde_${sde_name} -Z
+
+	[SENG475] Make a VM disk image that uses Btrfs and includes the SDE:
 	$0 -n f${fedora_release}_sde_${sde_name} -R $fedora_release -r ${sde_version} -k $data_dir/fedora/minimal_xfce_sde_btrfs.ks -d f${fedora_release}_sde_${sde_name}
 	EOF
 	exit 2
