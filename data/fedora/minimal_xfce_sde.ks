@@ -22,8 +22,8 @@ keyboard --vckeymap=us --xlayouts='us'
 lang en_US.UTF-8
 
 # Network information
-network  --bootproto=dhcp --device=ens3 --ipv6=auto --activate
-network  --hostname=terra
+network --bootproto=dhcp --device=ens3 --ipv6=auto --activate
+network --hostname=terra
 
 # Disk partitioning information
 ignoredisk --only-use=sda
@@ -80,6 +80,7 @@ gvfs
 firefox
 wget
 git
+git-credential-libsecret
 hub
 gcc
 gcc-c++
@@ -123,6 +124,7 @@ papi-devel
 tree
 google-noto-emoji-color-fonts
 valgrind
+libedit-devel
 %end
 
 %addon com_redhat_kdump --disable --reserve-mb='128'

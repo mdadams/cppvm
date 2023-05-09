@@ -91,6 +91,7 @@ gvfs
 firefox
 wget
 git
+git-credential-libsecret
 hub
 gcc
 gcc-c++
