@@ -136,6 +136,8 @@ tree
 google-noto-emoji-color-fonts
 valgrind
 libedit-devel
+poppler-utils
+recode
 %end
 
 %addon com_redhat_kdump --disable --reserve-mb='128'
