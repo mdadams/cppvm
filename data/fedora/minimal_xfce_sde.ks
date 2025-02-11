@@ -168,7 +168,7 @@ echo "SDE installation directory: $MVMDI_SDE_INSTALL_DIR"
 %end
 
 %post --interpreter /usr/bin/bash --log /root/install_sde.log --erroronfail
-########## START OF installer_stub ##########
+########## START OF sde_installer_stub ##########
 #! /usr/bin/env bash
 
 eecho()
@@ -323,5 +323,5 @@ fi
 if [ "${pipe_status[1]}" -ne 0 ]; then
 	panic "tee failed"
 fi
-########## END OF installer_stub ##########
+########## END OF sde_installer_stub ##########
 %end

@@ -66,11 +66,14 @@ get_checksum()
 usage()
 {
 	local fedora_release
+	local alt_fedora_release
 	local sde_version
 	local sde_name
+	alt_fedora_release=41
 	fedora_release=39
 	next_fedora_release=$((fedora_release + 1))
-	sde_version=10.4.2
+	#sde_version=10.4.2
+	sde_version=13.0.6
 	sde_name=$(echo "$sde_version" | tr '.' '_')
 	local data_dir
 	data_dir=$(realpath "$cmd_dir/../data") || data_dir=
@@ -97,8 +100,13 @@ usage()
 	Make a VM disk image that is based on an archived version of Fedora:
 	$0 -n f31 -m archives -R 31 -r "" -k $data_dir/fedora/minimal_xfce_sde.ks -d f31
 
-	(*) Make a VM disk image that does not include the SDE:
-	$0 -n f${fedora_release} -R $fedora_release -r "" -k $data_dir/fedora/minimal_xfce_sde_btrfs.ks -d f${fedora_release}
+	(*/**) Make a VM disk image that does not include the SDE:
+	$0 -n f${fedora_release} -R ${fedora_release} -r "" -k $data_dir/fedora/minimal_xfce_sde_btrfs.ks -d f${fedora_release}
+	$0 -n f${alt_fedora_release} -R ${alt_fedora_release} -r "" -k $data_dir/fedora/minimal_xfce_sde_btrfs-f41.ks -d f${alt_fedora_release}
+
+	Make a VM disk image that does not include the SDE but has some
+	developer tools:
+	$0 -n f${alt_fedora_release} -R ${alt_fedora_release} -r "" -k $data_dir/fedora/minimal_xfce_sde0_btrfs-f41.ks -d f${alt_fedora_release}
 
 	Examples With SDE
 	=================
@@ -110,8 +118,13 @@ usage()
 	Make a VM disk image that includes a GCC trunk build:
 	$0 -n f${fedora_release}_sde_${sde_name} -R $fedora_release -r ${sde_version} -k $data_dir/fedora/minimal_xfce_sde_btrfs.ks -d f${fedora_release}_sde_${sde_name} -Z
 
-	[SENG475] Make a VM disk image that uses Btrfs and includes the SDE:
+	(*) [SENG475 SDE] Make a VM disk image that uses Btrfs and includes the SDE:
 	$0 -n f${fedora_release}_sde_${sde_name} -R $fedora_release -r ${sde_version} -k $data_dir/fedora/minimal_xfce_sde_btrfs.ks -d f${fedora_release}_sde_${sde_name}
+
+	(**) [SENG475 SDE0] Make a VM disk image that uses Btrfs and includes
+	the SDE:
+	$0 -n f${alt_fedora_release}_sdex_${sde_name} -R $alt_fedora_release -r ${sde_version} -k $data_dir/fedora/minimal_xfce_sde0_btrfs-f41.ks -d f${alt_fedora_release}_sdex_${sde_name}
+
 	EOF
 	exit 2
 }

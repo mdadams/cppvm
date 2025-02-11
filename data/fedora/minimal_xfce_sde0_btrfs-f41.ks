@@ -66,7 +66,8 @@ services --enabled="chronyd"
 #qt5-qtbase-devel
 # Apparently, the flex package is sometimes needed for building GCC trunk.
 %packages
-@^minimal-environment
+@^custom-environment
+@core
 xorg-x11-server-Xorg
 xorg-x11-xinit
 xorg-x11-drv-libinput
@@ -97,7 +98,7 @@ gcc
 gcc-c++
 make
 texinfo
-python-devel
+python3-devel
 p7zip
 p7zip-plugins
 gmp-devel
@@ -138,6 +139,51 @@ valgrind
 libedit-devel
 poppler-utils
 recode
+
+##########
+# Additional packages relative to sde_installer_stub
+##########
+clang-devel
+clang-analyzer
+clang-libs
+clang-resource-filesystem
+clang-tools-extra
+llvm-devel
+llvm-libs
+boost-devel
+boost-static
+CGAL-devel
+catch-devel
+cmake
+ninja-build
+python-unversioned-command
+gh
+libasan
+libasan-static
+liblsan
+liblsan-static
+libubsan
+libubsan-static
+libtsan
+libtsan-static
+iputils
+openssh-clients
+procps-ng
+hostname
+lsb_release
+curl
+tar
+gzip
+perl-Digest-SHA
+jasper
+gdb
+lcov
+# texlive-scheme-full
+# bubblewrap
+jq
+##########
+##########
+
 %end
 
 %addon com_redhat_kdump --disable --reserve-mb='128'
@@ -181,7 +227,7 @@ echo "SDE installation directory: $MVMDI_SDE_INSTALL_DIR"
 %end
 
 %post --interpreter /usr/bin/bash --log /root/install_sde.log --erroronfail
-########## START OF sde_installer_stub ##########
+########## START OF sde0_installer_stub ##########
 #! /usr/bin/env bash
 
 eecho()
@@ -290,12 +336,35 @@ fi
 	#export SDE_TEXLIVE_INSTALL=1
 	export SDE_TEXLIVE_INSTALL=0
 	export SDE_VIM_INSTALL=0
-	export SDE_CGAL_INSTALL=1
+	#export SDE_CGAL_INSTALL=1
+	export SDE_CGAL_INSTALL=0
 	export SDE_HUB_INSTALL=0
 	export SDE_GHI_INSTALL=0
 	export SDE_GH_INSTALL=0
 	export SDE_GCC_GO_INSTALL=0
 	export SDE_YCM_INSTALL=0
+
+	##########
+	export SDE_INSTALL_CMAKE_VERSION=
+	export SDE_INSTALL_NINJA_VERSION=
+	export SDE_INSTALL_GCC_QVERSION=
+	export SDE_INSTALL_ALT_GCC_QVERSION=
+	export SDE_INSTALL_GCCGO_QVERSION=
+	export SDE_INSTALL_CLANG_QVERSION=
+	export SDE_INSTALL_ALT_CLANG_QVERSION=
+	export SDE_INSTALL_MUSL_VERSION=
+	export SDE_INSTALL_JASPER_VERSION=
+	export SDE_INSTALL_GDB_VERSION=
+	export SDE_INSTALL_TEXLIVE_VERSION=
+	export SDE_INSTALL_BOOST_VERSION=
+	export SDE_INSTALL_CGAL_VERSION=
+	export SDE_INSTALL_VIM_QVERSION=
+	export SDE_INSTALL_LCOV_VERSION=
+	export SDE_INSTALL_HUB_VERSION=
+	export SDE_INSTALL_GH_VERSION=
+	export SDE_INSTALL_GHI_VERSION=
+	export SDE_INSTALL_YCM_VERSION=
+	##########
 
 	# GCC settings
 	# NOTE: add rust support in the future
@@ -334,5 +403,5 @@ fi
 if [ "${pipe_status[1]}" -ne 0 ]; then
 	panic "tee failed"
 fi
-########## END OF sde_installer_stub ##########
+########## END OF sde0_installer_stub ##########
 %end

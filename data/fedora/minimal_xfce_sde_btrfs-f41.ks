@@ -66,7 +66,8 @@ services --enabled="chronyd"
 #qt5-qtbase-devel
 # Apparently, the flex package is sometimes needed for building GCC trunk.
 %packages
-@^minimal-environment
+@^custom-environment
+@core
 xorg-x11-server-Xorg
 xorg-x11-xinit
 xorg-x11-drv-libinput
