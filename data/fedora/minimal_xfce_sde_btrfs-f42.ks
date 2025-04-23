@@ -1,3 +1,190 @@
+#version=DEVEL
+
+# Specify the action to take upon completion of the install.
+#reboot
+#shutdown
+poweroff
+
+# Use graphical install
+graphical
+
+# Use network installation
+#url --url="__KS_URL__"
+url --mirrorlist="https://mirrors.fedoraproject.org/mirrorlist?repo=fedora-$releasever&arch=$basearch"
+
+# Uncomment the following line to allow the installation of updates.
+#repo --name=updates
+
+# Keyboard layouts
+keyboard --vckeymap=us --xlayouts='us'
+
+# System language
+lang en_US.UTF-8
+
+# Network information
+network --bootproto=dhcp --device=ens3 --ipv6=auto --activate
+network --hostname=terra
+
+########################################
+# Disk partitioning information
+########################################
+ignoredisk --only-use=sda
+# System bootloader configuration
+bootloader --location=mbr --boot-drive=sda
+# Partition clearing information
+clearpart --all --drives=sda
+#clearpart --none --initlabel
+# Disk partitioning information
+part biosboot --fstype="biosboot" --ondisk=sda --size=1
+part btrfs.01 --fstype="btrfs" --ondisk=sda --grow
+btrfs none --label=fedora_terra btrfs.01
+btrfs /boot --subvol --name=@boot LABEL=fedora_terra
+btrfs / --subvol --name=@ LABEL=fedora_terra
+btrfs /home --subvol --name=@home LABEL=fedora_terra
+
+# Root password
+#rootpw --plaintext iamroot
+rootpw --lock
+# User account
+user --name=jdoe --groups=wheel --plaintext --password=iamjdoe --gecos="John/Jane Doe"
+
+# System timezone
+timezone America/Vancouver --utc
+
+# Run the Setup Agent on first boot
+firstboot --enable
+
+# Configure the X Window System
+#skipx
+xconfig --startxonboot
+
+# System services
+services --enabled="chronyd"
+
+# Packages
+#lxdm?
+#qt5-qtbase-devel
+#xorg-x11-drv-vesa
+# Apparently, the flex package is sometimes needed for building GCC trunk.
+%packages
+@^custom-environment
+@core
+xorg-x11-server-Xorg
+xorg-x11-xinit
+xorg-x11-drv-libinput
+mesa-dri-drivers
+xorg-x11-drv-qxl
+spice-vdagent
+lightdm-autologin-greeter
+xfce4-panel
+xfce4-session
+xfce4-settings
+xfconf
+xfdesktop
+xfwm4
+xfce4-terminal
+xfce4-appfinder
+xfce4-pulseaudio-plugin
+thunar-volman
+network-manager-applet
+udisks2
+gvfs
+firefox
+wget
+git
+git-credential-libsecret
+hub
+gcc
+gcc-c++
+clang
+make
+meson
+texinfo
+python-devel
+p7zip
+p7zip-plugins
+gmp-devel
+mpfr-devel
+freeglut-devel
+glew-devel
+glfw-devel
+glm-devel
+autoconf
+automake
+libcap-devel
+libtool
+libxslt
+docbook-style-xsl
+ncurses-devel
+bzip2
+xz
+evince
+a2ps
+texlive-pdfjam
+lsof
+net-tools
+openssl-devel
+fftw-devel
+unzip
+perl-PerlIO-gzip
+perl-JSON
+perl-JSON-PP
+vim-enhanced
+flex
+libsecret
+seahorse
+gperftools
+papi-devel
+tree
+google-noto-emoji-color-fonts
+valgrind
+libedit-devel
+poppler-utils
+recode
+%end
+
+%addon com_redhat_kdump --disable --reserve-mb='128'
+
+%end
+
+%pre
+################################################################################
+set -- `cat /proc/cmdline`
+
+for x in $*; do 
+	case $x in MVMDI_*) 
+		#eval $x
+		echo $x >> /tmp/mvmdi_setup.sh
+		;; 
+	esac; 
+done
+
+################################################################################
+%end
+
+%post --interpreter /usr/bin/bash --nochroot --erroronfail
+################################################################################
+
+cp /tmp/mvmdi_setup.sh /mnt/sysimage/root/mvmdi_setup.sh
+
+################################################################################
+%end
+
+%post --interpreter /usr/bin/bash --log /root/mvmdi.log --erroronfail
+################################################################################
+
+echo "========== START of mvmdi_setup.sh =========="
+cat /root/mvmdi_setup.sh
+echo "========== END of mvmdi_setup.sh =========="
+source /root/mvmdi_setup.sh
+echo "SDE version: $MVMDI_SDE_VERSION"
+echo "SDE installation directory: $MVMDI_SDE_INSTALL_DIR"
+
+################################################################################
+%end
+
+%post --interpreter /usr/bin/bash --log /root/install_sde.log --erroronfail
+########## START OF sde_installer_stub ##########
 #! /usr/bin/env bash
 
 eecho()
@@ -195,3 +382,5 @@ fi
 if [ "${pipe_status[1]}" -ne 0 ]; then
 	panic "tee failed"
 fi
+########## END OF sde_installer_stub ##########
+%end
