@@ -74,7 +74,7 @@ usage()
 	next_fedora_release=$((fedora_release + 1))
 	#sde_version=10.4.2
 	#sde_version=13.0.6
-	sde_version=13.5.7
+	sde_version=13.5.9
 	sde_name=$(echo "$sde_version" | tr '.' '_')
 	local data_dir
 	data_dir=$(realpath "$cmd_dir/../data") || data_dir=
@@ -124,7 +124,7 @@ usage()
 	$0 -n f${fedora_release}_sde_${sde_name} -R $fedora_release -r ${sde_version} -k $data_dir/fedora/minimal_xfce_sde_btrfs.ks -d f${fedora_release}_sde_${sde_name}
 
 	(*) [SENG475 SDE] Make a VM disk image that uses Btrfs and includes the SDE:
-	$0 -n f${fedora_release}_sde_${sde_name} -R $fedora_release -r ${sde_version} -k $data_dir/fedora/minimal_xfce_sde_btrfs-f42.ks -d f${fedora_release}_sde_${sde_name} -T /var/tmp
+	# $0 -n f${fedora_release}_sde_${sde_name} -R $fedora_release -r ${sde_version} -k $data_dir/fedora/minimal_xfce_sde_btrfs-f42.ks -d f${fedora_release}_sde_${sde_name} -T /var/tmp
 	Use this:
 	$0 -n f${fedora_release}_sde_${sde_name} -R $fedora_release -r ${sde_version} -k $data_dir/fedora/minimal_xfce_sde_btrfs-f42.ks -d f${fedora_release}_sde_${sde_name}
 
